@@ -46,21 +46,6 @@ function getFieldType(value) {
   return 'text';
 }
 
-// Helper: Get display value for table
-function getDisplayValue(value, fieldName) {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'boolean') return value ? '✓' : '';
-  if (Array.isArray(value)) return `📝 ${value.length} items`;
-  if (typeof value === 'string' && value.length > 40) {
-    return value.substring(0, 37) + '...';
-  }
-  // Check if it's an icon field
-  if (fieldName === 'ikon' || fieldName === 'icon') {
-    return value; // Will show icon name for now
-  }
-  return value;
-}
-
 function App() {
   const [selectedCategoryIndex, setSelectedCategoryIndex] = useState(0);
   const [packages, setPackages] = useState(MOCK_PACKAGES);
