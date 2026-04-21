@@ -8,6 +8,7 @@ import ColorPickerModal from './components/ColorPickerModal';
 import NewJsonModal from './components/NewJsonModal';
 import StatusModal from './components/StatusModal';
 import ExtraFieldsPanel from './components/ExtraFieldsPanel';
+import JsonPreviewPanel from './components/JsonPreviewPanel';
 import { useConfirm } from './components/ConfirmModal';
 
 // Litt moro: en samling undertitler som roteres tilfeldig ved hver side-lasting
@@ -71,6 +72,7 @@ function App() {
   const [newJsonModalOpen, setNewJsonModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   // Velg en tilfeldig undertittel ved mount (ikke re-generer ved hver render)
   const [subtitle] = useState(() => randomSubtitle());
   const [editingField, setEditingField] = useState({ source: 'package', packageId: null, fieldName: null, value: null, wrapperKey: null });
@@ -134,6 +136,29 @@ function App() {
       setJsonStructure(next);
       return next;
     }
+  };
+
+  // Beregn live JSON (uten å mutere state) — brukes av preview-panelet.
+  const computeLiveJson = () => {
+    if (!jsonStructure) return null;
+    const cleanedPackages = packages.map((pkg) => {
+      const { _internalId, ...rest } = pkg;
+      return rest;
+    });
+    const rootIsArray = Array.isArray(jsonStructure.originalData);
+
+    if (jsonStructure.hasCategories) {
+      const itemsKey = jsonStructure.itemsKey || 'pakker';
+      const updatedData = jsonStructure.data.map((cat, idx) =>
+        idx === selectedCategoryIndex ? { ...cat, [itemsKey]: cleanedPackages } : cat
+      );
+      return rootIsArray
+        ? updatedData
+        : { ...jsonStructure.originalData, [jsonStructure.mainKey]: updatedData };
+    }
+    return rootIsArray
+      ? cleanedPackages
+      : { ...jsonStructure.originalData, [jsonStructure.mainKey]: cleanedPackages };
   };
 
   const loadPackagesForCategory = (structure, newIndex) => {
@@ -701,10 +726,24 @@ function App() {
 
   return (
     <div className="app-container">
+      <div className={`workspace ${previewOpen ? 'split' : ''}`}>
       <div className="editor-card">
-        <h1 className="title" data-testid="app-title">Universal JSON Editor</h1>
-        <div className="subtitle" data-testid="app-subtitle" title="Oppdater siden for en ny setning">
-          {subtitle}
+        <div className="editor-header">
+          <div>
+            <h1 className="title" data-testid="app-title">Universal JSON Editor</h1>
+            <div className="subtitle" data-testid="app-subtitle" title="Oppdater siden for en ny setning">
+              {subtitle}
+            </div>
+          </div>
+          <button
+            className={`preview-toggle ${previewOpen ? 'active' : ''}`}
+            onClick={() => setPreviewOpen(!previewOpen)}
+            data-testid="toggle-preview-btn"
+            title={previewOpen ? 'Skjul rå JSON' : 'Vis rå JSON'}
+          >
+            <span>{'{}'}</span>
+            {previewOpen ? 'Skjul JSON' : 'Vis JSON'}
+          </button>
         </div>
 
         {/* Last inn metode */}
@@ -975,6 +1014,14 @@ function App() {
         </div>
       </div>
 
+      <JsonPreviewPanel
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        jsonValue={computeLiveJson()}
+        mainKey={jsonStructure?.mainKey}
+      />
+      </div>
+
       <footer className="app-footer" data-testid="app-footer">
         <span className="footer-brand">DESIGNED BY KO</span>
         <span className="footer-sep">|</span>
@@ -982,7 +1029,7 @@ function App() {
         <span className="footer-sep">·</span>
         <span>CONSULT</span>
         <span className="footer-sep">·</span>
-        <span className="footer-version">V1.1</span>
+        <span className="footer-version">V2.0</span>
       </footer>
 
       {/* Modals */}
