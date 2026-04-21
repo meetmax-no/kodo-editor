@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import TextEditModal from './components/TextEditModal';
 import ListEditModal from './components/ListEditModal';
@@ -14,25 +14,6 @@ const MOCK_PACKAGES = [
   }
 ];
 
-// Forhåndslagrede URL-er
-const PRESET_URLS = [
-  {
-    name: "Priser (Tannlege Per)",
-    url: "https://raw.githubusercontent.com/meetmax-no/tannlege-per/refs/heads/main/frontend/public/data/priser.json"
-  },
-  {
-    name: "Åpningstider (Tannlege Per)",
-    url: "https://raw.githubusercontent.com/meetmax-no/tannlege-per/refs/heads/main/frontend/public/data/apningstider.json"
-  },
-  {
-    name: "Tjenester (Tannlege Per)",
-    url: "https://raw.githubusercontent.com/meetmax-no/tannlege-per/refs/heads/main/frontend/public/data/tjenester.json"
-  },
-  {
-    name: "Custom URL...",
-    url: ""
-  }
-];
 
 // Helper: Detect field type
 function getFieldType(value) {
@@ -64,15 +45,57 @@ function App() {
   const [colorModalOpen, setColorModalOpen] = useState(false);
   const [editingField, setEditingField] = useState({ packageId: null, fieldName: null, value: null });
 
+  // Load preset URLs from urls.json on mount
+  useEffect(() => {
+    fetch('/urls.json')
+      .then(res => res.json())
+      .then(data => setPresetUrls(data))
+      .catch(err => {
+        console.error('Could not load urls.json:', err);
+        // Fallback to hardcoded
+        setPresetUrls([
+          { name: "Custom URL...", url: "" }
+        ]);
+      });
+  }, []);
+
   const handleNext = () => {
-    if (selectedCategoryIndex < MOCK_CATEGORIES.length - 1) {
-      setSelectedCategoryIndex(selectedCategoryIndex + 1);
+    if (selectedCategoryIndex < categories.length - 1) {
+      const newIndex = selectedCategoryIndex + 1;
+      setSelectedCategoryIndex(newIndex);
+      
+      // Load packages for new category if nested structure
+      if (jsonStructure && jsonStructure.hasCategories) {
+        const categoryData = jsonStructure.data[newIndex];
+        const itemsKey = jsonStructure.itemsKey || 'pakker';
+        if (categoryData[itemsKey]) {
+          const itemsWithIds = categoryData[itemsKey].map((item, idx) => ({
+            _internalId: `cat_${newIndex}_${idx}`,
+            ...item
+          }));
+          setPackages(itemsWithIds);
+        }
+      }
     }
   };
 
   const handlePrevious = () => {
     if (selectedCategoryIndex > 0) {
-      setSelectedCategoryIndex(selectedCategoryIndex - 1);
+      const newIndex = selectedCategoryIndex - 1;
+      setSelectedCategoryIndex(newIndex);
+      
+      // Load packages for new category if nested structure
+      if (jsonStructure && jsonStructure.hasCategories) {
+        const categoryData = jsonStructure.data[newIndex];
+        const itemsKey = jsonStructure.itemsKey || 'pakker';
+        if (categoryData[itemsKey]) {
+          const itemsWithIds = categoryData[itemsKey].map((item, idx) => ({
+            _internalId: `cat_${newIndex}_${idx}`,
+            ...item
+          }));
+          setPackages(itemsWithIds);
+        }
+      }
     }
   };
 
@@ -96,9 +119,9 @@ function App() {
 
   // Load JSON from URL
   const handleLoadJSON = async () => {
-    const url = selectedPreset === PRESET_URLS.length - 1 
+    const url = selectedPreset === presetUrls.length - 1 
       ? customUrl 
-      : PRESET_URLS[selectedPreset].url;
+      : presetUrls[selectedPreset].url;
 
     if (!url) {
       setError('Vennligst skriv inn en URL');
@@ -562,7 +585,7 @@ function App() {
                   className="category-select"
                   style={{ border: '2px solid #2563eb' }}
                 >
-                  {PRESET_URLS.map((preset, index) => (
+                  {presetUrls.map((preset, index) => (
                     <option key={index} value={index}>
                       {preset.name}
                     </option>
@@ -570,7 +593,7 @@ function App() {
                 </select>
               </div>
               
-              {selectedPreset === PRESET_URLS.length - 1 ? (
+              {selectedPreset === presetUrls.length - 1 ? (
                 <div className="url-input-row">
                   <input
                     type="text"
@@ -592,7 +615,7 @@ function App() {
                   <input
                     type="text"
                     className="url-input"
-                    value={PRESET_URLS[selectedPreset].url}
+                    value={presetUrls[selectedPreset].url}
                     readOnly
                     style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
                   />
