@@ -53,7 +53,8 @@ function App() {
 
   // Load preset URLs from url.json on mount
   useEffect(() => {
-    fetch('/url.json')
+    // Cache-bust via query-param så vi alltid henter nyeste versjon
+    fetch(`/url.json?t=${Date.now()}`, { cache: 'no-store' })
       .then(res => res.json())
       .then(data => setPresetUrls(data))
       .catch(err => {
@@ -158,7 +159,9 @@ function App() {
     setError(null);
 
     try {
-      const response = await fetch(url);
+      // Cache-bust for URL-er også (spesielt raw.githubusercontent.com har CDN-cache)
+      const cacheBustedUrl = url.includes('?') ? `${url}&_=${Date.now()}` : `${url}?_=${Date.now()}`;
+      const response = await fetch(cacheBustedUrl, { cache: 'no-store' });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
