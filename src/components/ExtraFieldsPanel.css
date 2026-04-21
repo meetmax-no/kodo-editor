@@ -1,0 +1,178 @@
+/* ExtraFieldsPanel */
+
+.efp-wrapper {
+  margin: 0 0 20px;
+}
+
+.efp-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.efp-header-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.efp-header-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4338ca;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+
+.efp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+.efp-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.efp-card.open {
+  box-shadow: 0 4px 12px -6px rgba(15, 23, 42, 0.08);
+}
+
+.efp-card-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: none;
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 120ms ease;
+}
+
+.efp-card.open .efp-card-toggle {
+  border-bottom-color: #e2e8f0;
+}
+
+.efp-card-toggle:hover {
+  background: #f1f5f9;
+}
+
+.efp-chevron {
+  display: inline-block;
+  font-size: 10px;
+  color: #94a3b8;
+  transition: transform 160ms ease;
+}
+
+.efp-chevron.open { transform: rotate(90deg); }
+
+.efp-card-title {
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  flex: 1;
+}
+
+.efp-card-meta {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.efp-card-body {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.efp-field {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.efp-field-label {
+  font-size: 12px;
+  color: #475569;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.efp-input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #0f172a;
+  background: #ffffff;
+  font-family: inherit;
+  transition: all 120ms ease;
+}
+
+.efp-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+.efp-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #4f46e5;
+  cursor: pointer;
+}
+
+.efp-edit-btn {
+  padding: 6px 10px;
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 120ms ease;
+  font-family: inherit;
+  text-align: left;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  max-width: 100%;
+}
+
+.efp-edit-btn:hover {
+  background: #e0e7ff;
+  border-color: #c7d2fe;
+}
+
+.efp-edit-btn.color { padding: 4px 10px 4px 4px; }
+
+.efp-color-box {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+}
+
+@media (max-width: 640px) {
+  .efp-field { grid-template-columns: 1fr; }
+  .efp-field-label { font-size: 11px; }
+}

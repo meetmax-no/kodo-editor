@@ -6,6 +6,7 @@ import IconPickerModal from './components/IconPickerModal';
 import ColorPickerModal from './components/ColorPickerModal';
 import NewJsonModal from './components/NewJsonModal';
 import StatusModal from './components/StatusModal';
+import ExtraFieldsPanel from './components/ExtraFieldsPanel';
 
 // Mock data kun for demo ved oppstart
 const MOCK_CATEGORIES = ["Demo"];
@@ -48,7 +49,7 @@ function App() {
   const [colorModalOpen, setColorModalOpen] = useState(false);
   const [newJsonModalOpen, setNewJsonModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
-  const [editingField, setEditingField] = useState({ packageId: null, fieldName: null, value: null });
+  const [editingField, setEditingField] = useState({ source: 'package', packageId: null, fieldName: null, value: null, wrapperKey: null });
 
   // Load preset URLs from url.json on mount
   useEffect(() => {
@@ -410,8 +411,8 @@ function App() {
   // Open appropriate modal based on field type
   const handleEditClick = (internalId, fieldName, value) => {
     const fieldType = getFieldType(value);
-    
-    setEditingField({ packageId: internalId, fieldName, value });
+
+    setEditingField({ source: 'package', packageId: internalId, fieldName, value, wrapperKey: null });
 
     if (fieldName === 'color' || fieldName === 'farge') {
       setColorModalOpen(true);
@@ -424,26 +425,51 @@ function App() {
     }
   };
 
-  // Save from modals
-  const handleSaveText = (newValue) => {
-    handleInputChange(editingField.packageId, editingField.fieldName, newValue);
-    setEditingField({ packageId: null, fieldName: null, value: null });
+  // Inline change on an extra field (not via modal)
+  const handleExtraFieldChange = (wrapperKey, fieldName, newValue) => {
+    if (!jsonStructure) return;
+    const updatedOriginal = {
+      ...jsonStructure.originalData,
+      [wrapperKey]: {
+        ...jsonStructure.originalData[wrapperKey],
+        [fieldName]: newValue,
+      },
+    };
+    setJsonStructure({ ...jsonStructure, originalData: updatedOriginal });
   };
 
-  const handleSaveList = (newList) => {
-    handleInputChange(editingField.packageId, editingField.fieldName, newList);
-    setEditingField({ packageId: null, fieldName: null, value: null });
+  // Open modal for an extra field (longtext / array / color / icon)
+  const handleEditExtraField = (wrapperKey, fieldName, value) => {
+    setEditingField({ source: 'extra', packageId: null, fieldName, value, wrapperKey });
+
+    if (fieldName === 'color' || fieldName === 'farge') {
+      setColorModalOpen(true);
+    } else if (fieldName === 'ikon' || fieldName === 'icon') {
+      setIconModalOpen(true);
+    } else if (Array.isArray(value)) {
+      setListModalOpen(true);
+    } else {
+      setTextModalOpen(true);
+    }
   };
 
-  const handleSaveIcon = (iconName) => {
-    handleInputChange(editingField.packageId, editingField.fieldName, iconName);
-    setEditingField({ packageId: null, fieldName: null, value: null });
+  const resetEditingField = () =>
+    setEditingField({ source: 'package', packageId: null, fieldName: null, value: null, wrapperKey: null });
+
+  // Dispatch save from modals to the right store (package row or extra field)
+  const applySavedValue = (newValue) => {
+    if (editingField.source === 'extra' && editingField.wrapperKey) {
+      handleExtraFieldChange(editingField.wrapperKey, editingField.fieldName, newValue);
+    } else {
+      handleInputChange(editingField.packageId, editingField.fieldName, newValue);
+    }
+    resetEditingField();
   };
 
-  const handleSaveColor = (colorValue) => {
-    handleInputChange(editingField.packageId, editingField.fieldName, colorValue);
-    setEditingField({ packageId: null, fieldName: null, value: null });
-  };
+  const handleSaveText  = (newValue)   => applySavedValue(newValue);
+  const handleSaveList  = (newList)    => applySavedValue(newList);
+  const handleSaveIcon  = (iconName)   => applySavedValue(iconName);
+  const handleSaveColor = (colorValue) => applySavedValue(colorValue);
 
   // Export functions
   const handleDownloadJSON = () => {
@@ -751,6 +777,22 @@ function App() {
             Neste →
           </button>
         </div>
+
+        {/* Ekstra felter — rot-objekter ved siden av hoved-arrayet */}
+        {jsonStructure?.originalData && (() => {
+          const extras = Object.entries(jsonStructure.originalData).filter(
+            ([k, v]) => k !== jsonStructure.mainKey && v !== null && typeof v === 'object' && !Array.isArray(v)
+          );
+          if (extras.length === 0) return null;
+          return (
+            <ExtraFieldsPanel
+              extraEntries={extras}
+              getFieldType={getFieldType}
+              onChange={handleExtraFieldChange}
+              onEditField={handleEditExtraField}
+            />
+          );
+        })()}
 
         {/* Pakker-tabell */}
         <div className="table-section">
