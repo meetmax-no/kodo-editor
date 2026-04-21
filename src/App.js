@@ -4,6 +4,7 @@ import TextEditModal from './components/TextEditModal';
 import ListEditModal from './components/ListEditModal';
 import IconPickerModal from './components/IconPickerModal';
 import ColorPickerModal from './components/ColorPickerModal';
+import NewJsonModal from './components/NewJsonModal';
 
 // Mock data kun for demo ved oppstart
 const MOCK_CATEGORIES = ["Demo"];
@@ -37,12 +38,14 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [jsonStructure, setJsonStructure] = useState(null); // Store original structure
+  const [presetUrls, setPresetUrls] = useState([{ name: "Custom URL...", url: "" }]);
 
   // Modal states
   const [textModalOpen, setTextModalOpen] = useState(false);
   const [listModalOpen, setListModalOpen] = useState(false);
   const [iconModalOpen, setIconModalOpen] = useState(false);
   const [colorModalOpen, setColorModalOpen] = useState(false);
+  const [newJsonModalOpen, setNewJsonModalOpen] = useState(false);
   const [editingField, setEditingField] = useState({ packageId: null, fieldName: null, value: null });
 
   // Load preset URLs from url.json on mount
@@ -59,22 +62,51 @@ function App() {
       });
   }, []);
 
+  // Persist current packages back into jsonStructure.data for the current category.
+  // Returns an updated jsonStructure clone that callers can use immediately.
+  const persistCurrentPackages = () => {
+    if (!jsonStructure) return null;
+    const cleanedPackages = packages.map((pkg) => {
+      const { _internalId, ...rest } = pkg;
+      return rest;
+    });
+
+    if (jsonStructure.hasCategories) {
+      const itemsKey = jsonStructure.itemsKey || 'pakker';
+      const updatedData = jsonStructure.data.map((cat, idx) =>
+        idx === selectedCategoryIndex ? { ...cat, [itemsKey]: cleanedPackages } : cat
+      );
+      const updatedOriginal = { ...jsonStructure.originalData, [jsonStructure.mainKey]: updatedData };
+      const next = { ...jsonStructure, data: updatedData, originalData: updatedOriginal };
+      setJsonStructure(next);
+      return next;
+    } else {
+      const updatedOriginal = { ...jsonStructure.originalData, [jsonStructure.mainKey]: cleanedPackages };
+      const next = { ...jsonStructure, data: cleanedPackages, originalData: updatedOriginal };
+      setJsonStructure(next);
+      return next;
+    }
+  };
+
+  const loadPackagesForCategory = (structure, newIndex) => {
+    const itemsKey = structure.itemsKey || 'pakker';
+    const categoryData = structure.data[newIndex];
+    const items = categoryData[itemsKey] || [];
+    const itemsWithIds = items.map((item, idx) => ({
+      _internalId: `cat_${newIndex}_${idx}_${Date.now()}`,
+      ...item,
+    }));
+    setPackages(itemsWithIds);
+  };
+
+
   const handleNext = () => {
     if (selectedCategoryIndex < categories.length - 1) {
       const newIndex = selectedCategoryIndex + 1;
+      const persisted = persistCurrentPackages();
       setSelectedCategoryIndex(newIndex);
-      
-      // Load packages for new category if nested structure
-      if (jsonStructure && jsonStructure.hasCategories) {
-        const categoryData = jsonStructure.data[newIndex];
-        const itemsKey = jsonStructure.itemsKey || 'pakker';
-        if (categoryData[itemsKey]) {
-          const itemsWithIds = categoryData[itemsKey].map((item, idx) => ({
-            _internalId: `cat_${newIndex}_${idx}`,
-            ...item
-          }));
-          setPackages(itemsWithIds);
-        }
+      if (persisted && persisted.hasCategories) {
+        loadPackagesForCategory(persisted, newIndex);
       }
     }
   };
@@ -82,38 +114,20 @@ function App() {
   const handlePrevious = () => {
     if (selectedCategoryIndex > 0) {
       const newIndex = selectedCategoryIndex - 1;
+      const persisted = persistCurrentPackages();
       setSelectedCategoryIndex(newIndex);
-      
-      // Load packages for new category if nested structure
-      if (jsonStructure && jsonStructure.hasCategories) {
-        const categoryData = jsonStructure.data[newIndex];
-        const itemsKey = jsonStructure.itemsKey || 'pakker';
-        if (categoryData[itemsKey]) {
-          const itemsWithIds = categoryData[itemsKey].map((item, idx) => ({
-            _internalId: `cat_${newIndex}_${idx}`,
-            ...item
-          }));
-          setPackages(itemsWithIds);
-        }
+      if (persisted && persisted.hasCategories) {
+        loadPackagesForCategory(persisted, newIndex);
       }
     }
   };
 
   const handleCategoryChange = (e) => {
     const newIndex = parseInt(e.target.value);
+    const persisted = persistCurrentPackages();
     setSelectedCategoryIndex(newIndex);
-    
-    // If we have a nested structure, load packages for this category
-    if (jsonStructure && jsonStructure.hasCategories) {
-      const categoryData = jsonStructure.data[newIndex];
-      const itemsKey = jsonStructure.itemsKey || 'pakker';
-      if (categoryData[itemsKey]) {
-        const itemsWithIds = categoryData[itemsKey].map((item, idx) => ({
-          _internalId: `cat_${newIndex}_${idx}`,
-          ...item
-        }));
-        setPackages(itemsWithIds);
-      }
+    if (persisted && persisted.hasCategories) {
+      loadPackagesForCategory(persisted, newIndex);
     }
   };
 
@@ -305,6 +319,7 @@ function App() {
     
     // Copy structure from first package with empty values
     Object.keys(firstPackage).forEach(key => {
+      if (key.startsWith('_')) return;
       const type = getFieldType(firstPackage[key]);
       if (type === 'boolean') newPackage[key] = false;
       else if (type === 'array') newPackage[key] = [];
@@ -313,6 +328,46 @@ function App() {
     });
     
     setPackages([...packages, newPackage]);
+  };
+
+  // Create a new JSON from scratch via NewJsonModal
+  const handleCreateNewJson = ({ structure, data, mainKey, itemsKey, categoryLabelKey }) => {
+    if (structure === 'flat') {
+      const mainArray = data[mainKey];
+      const itemsWithIds = mainArray.map((item, idx) => ({
+        _internalId: `new_${Date.now()}_${idx}`,
+        ...item,
+      }));
+      setCategories(['Alle']);
+      setPackages(itemsWithIds);
+      setJsonStructure({
+        hasCategories: false,
+        data: mainArray,
+        originalData: data,
+        mainKey,
+      });
+      setSelectedCategoryIndex(0);
+    } else {
+      const mainArray = data[mainKey];
+      const catKey = categoryLabelKey || 'kategori';
+      const categoryNames = mainArray.map((cat) => cat[catKey]);
+      const firstItems = (mainArray[0][itemsKey] || []).map((item, idx) => ({
+        _internalId: `new_${Date.now()}_${idx}`,
+        ...item,
+      }));
+      setCategories(categoryNames);
+      setPackages(firstItems);
+      setJsonStructure({
+        hasCategories: true,
+        data: mainArray,
+        originalData: data,
+        mainKey,
+        itemsKey,
+      });
+      setSelectedCategoryIndex(0);
+    }
+    setError(null);
+    setNewJsonModalOpen(false);
   };
 
   const handleDeletePackage = (internalId) => {
@@ -368,48 +423,20 @@ function App() {
   // Export functions
   const handleDownloadJSON = () => {
     if (!jsonStructure) {
-      alert('Ingen data å eksportere. Last inn en JSON-fil først.');
+      alert('Ingen data å eksportere. Last inn eller opprett en JSON-fil først.');
       return;
     }
 
     try {
-      // Start with original data to preserve ALL fields (like studenttilbud)
-      let exportData = { ...jsonStructure.originalData };
+      const persisted = persistCurrentPackages() || jsonStructure;
+      const exportData = persisted.originalData;
 
-      if (jsonStructure.hasCategories) {
-        // Nested structure - update only the edited category
-        const itemsKey = jsonStructure.itemsKey || 'pakker';
-        const updatedCategories = jsonStructure.data.map((category, idx) => {
-          if (idx === selectedCategoryIndex) {
-            // Update current category with edited packages
-            const cleanedPackages = packages.map(pkg => {
-              const { _internalId, ...cleanPkg } = pkg;
-              return cleanPkg;
-            });
-            return {
-              ...category,
-              [itemsKey]: cleanedPackages
-            };
-          }
-          return category;
-        });
-        exportData[jsonStructure.mainKey] = updatedCategories;
-      } else {
-        // Flat structure
-        const cleanedPackages = packages.map(pkg => {
-          const { _internalId, ...cleanPkg } = pkg;
-          return cleanPkg;
-        });
-        exportData[jsonStructure.mainKey] = cleanedPackages;
-      }
-
-      // Create and download file
       const jsonString = JSON.stringify(exportData, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${jsonStructure.mainKey}_edited.json`;
+      link.download = `${persisted.mainKey}_edited.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -423,37 +450,13 @@ function App() {
 
   const handleCopyToClipboard = async () => {
     if (!jsonStructure) {
-      alert('Ingen data å kopiere. Last inn en JSON-fil først.');
+      alert('Ingen data å kopiere. Last inn eller opprett en JSON-fil først.');
       return;
     }
 
     try {
-      // Start with original data to preserve ALL fields
-      let exportData = { ...jsonStructure.originalData };
-
-      if (jsonStructure.hasCategories) {
-        const itemsKey = jsonStructure.itemsKey || 'pakker';
-        const updatedCategories = jsonStructure.data.map((category, idx) => {
-          if (idx === selectedCategoryIndex) {
-            const cleanedPackages = packages.map(pkg => {
-              const { _internalId, ...cleanPkg } = pkg;
-              return cleanPkg;
-            });
-            return {
-              ...category,
-              [itemsKey]: cleanedPackages
-            };
-          }
-          return category;
-        });
-        exportData[jsonStructure.mainKey] = updatedCategories;
-      } else {
-        const cleanedPackages = packages.map(pkg => {
-          const { _internalId, ...cleanPkg } = pkg;
-          return cleanPkg;
-        });
-        exportData[jsonStructure.mainKey] = cleanedPackages;
-      }
+      const persisted = persistCurrentPackages() || jsonStructure;
+      const exportData = persisted.originalData;
 
       const jsonString = JSON.stringify(exportData, null, 2);
       await navigator.clipboard.writeText(jsonString);
@@ -554,7 +557,8 @@ function App() {
   return (
     <div className="app-container">
       <div className="editor-card">
-        <h1 className="title">🔧 Universal JSON Editor</h1>
+        <h1 className="title" data-testid="app-title">Universal JSON Editor</h1>
+        <div className="subtitle">Rediger nestede JSON-filer trygt — uten å miste strukturen.</div>
 
         {/* Last inn metode */}
         <div className="load-section">
@@ -562,28 +566,38 @@ function App() {
             <button
               onClick={() => setLoadMethod('url')}
               className={`tab-button ${loadMethod === 'url' ? 'active' : ''}`}
+              data-testid="tab-url-btn"
             >
               🔗 Fra URL
             </button>
             <button
               onClick={() => setLoadMethod('file')}
               className={`tab-button ${loadMethod === 'file' ? 'active' : ''}`}
+              data-testid="tab-file-btn"
             >
               📁 Lokal fil
+            </button>
+            <div style={{ flex: 1 }} />
+            <button
+              onClick={() => setNewJsonModalOpen(true)}
+              className="tab-button new-json-btn"
+              data-testid="open-new-json-btn"
+            >
+              ✨ Ny JSON
             </button>
           </div>
 
           {loadMethod === 'url' ? (
             <div>
               <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500, color: '#374151' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500, color: '#475569', fontSize: '13px' }}>
                   Velg JSON-fil:
                 </label>
                 <select 
                   value={selectedPreset}
                   onChange={(e) => setSelectedPreset(parseInt(e.target.value))}
                   className="category-select"
-                  style={{ border: '2px solid #2563eb' }}
+                  data-testid="preset-url-select"
                 >
                   {presetUrls.map((preset, index) => (
                     <option key={index} value={index}>
@@ -601,13 +615,15 @@ function App() {
                     className="url-input"
                     value={customUrl}
                     onChange={(e) => setCustomUrl(e.target.value)}
+                    data-testid="custom-url-input"
                   />
                   <button 
                     className="btn-primary" 
                     onClick={handleLoadJSON}
                     disabled={loading}
+                    data-testid="load-json-btn"
                   >
-                    {loading ? '⏳ Laster...' : '📥 Last inn'}
+                    {loading ? 'Laster…' : 'Last inn'}
                   </button>
                 </div>
               ) : (
@@ -615,16 +631,17 @@ function App() {
                   <input
                     type="text"
                     className="url-input"
-                    value={presetUrls[selectedPreset].url}
+                    value={presetUrls[selectedPreset]?.url || ''}
                     readOnly
-                    style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
+                    style={{ background: '#f1f5f9', cursor: 'not-allowed', color: '#64748b' }}
                   />
                   <button 
                     className="btn-primary"
                     onClick={handleLoadJSON}
                     disabled={loading}
+                    data-testid="load-json-btn"
                   >
-                    {loading ? '⏳ Laster...' : '📥 Last inn'}
+                    {loading ? 'Laster…' : 'Last inn'}
                   </button>
                 </div>
               )}
@@ -637,15 +654,16 @@ function App() {
                 style={{ display: 'none' }}
                 id="file-upload"
                 onChange={handleFileUpload}
+                data-testid="file-upload-input"
               />
               <label htmlFor="file-upload" style={{ cursor: 'pointer' }}>
-                <div style={{ fontSize: '40px', marginBottom: '8px' }}>
+                <div style={{ fontSize: '32px', marginBottom: '8px' }}>
                   {loading ? '⏳' : '📁'}
                 </div>
-                <div style={{ fontWeight: 500 }}>
-                  {loading ? 'Laster...' : 'Klikk for å velge fil'}
+                <div style={{ fontWeight: 500, color: '#0f172a' }}>
+                  {loading ? 'Laster…' : 'Klikk for å velge fil'}
                 </div>
-                <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>
+                <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
                   eller dra og slipp her
                 </div>
               </label>
@@ -670,6 +688,7 @@ function App() {
             onClick={handlePrevious}
             disabled={selectedCategoryIndex === 0}
             className="nav-button"
+            data-testid="prev-category-btn"
           >
             ← Forrige
           </button>
@@ -678,6 +697,7 @@ function App() {
             value={selectedCategoryIndex}
             onChange={handleCategoryChange}
             className="category-select"
+            data-testid="category-select"
           >
             {categories.map((cat, index) => (
               <option key={index} value={index}>
@@ -690,6 +710,7 @@ function App() {
             onClick={handleNext}
             disabled={selectedCategoryIndex === categories.length - 1}
             className="nav-button"
+            data-testid="next-category-btn"
           >
             Neste →
           </button>
@@ -740,16 +761,16 @@ function App() {
         </div>
 
         {/* Legg til pakke knapp */}
-        <button onClick={handleAddPackage} className="btn-add">
+        <button onClick={handleAddPackage} className="btn-add" data-testid="add-package-btn">
           ➕ Legg til pakke
         </button>
 
         {/* Eksporter-knapper */}
         <div className="export-section">
-          <button className="btn-blue" onClick={handleDownloadJSON}>
+          <button className="btn-blue" onClick={handleDownloadJSON} data-testid="download-json-btn">
             💾 Last ned JSON
           </button>
-          <button className="btn-orange" onClick={handleCopyToClipboard}>
+          <button className="btn-orange" onClick={handleCopyToClipboard} data-testid="copy-json-btn">
             📋 Kopier til clipboard
           </button>
         </div>
@@ -784,6 +805,12 @@ function App() {
         onClose={() => setColorModalOpen(false)}
         currentColor={editingField.value}
         onSave={handleSaveColor}
+      />
+
+      <NewJsonModal
+        isOpen={newJsonModalOpen}
+        onClose={() => setNewJsonModalOpen(false)}
+        onCreate={handleCreateNewJson}
       />
     </div>
   );
