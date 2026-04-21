@@ -162,6 +162,54 @@ function App() {
       : { ...jsonStructure.originalData, [jsonStructure.mainKey]: cleanedPackages };
   };
 
+  // Sjekk om en gitt path i den serialiserte JSON-en tilsvarer en endret verdi.
+  // Brukes av JsonPreviewPanel for å male gul bakgrunn på endrede tokens.
+  const isPathEdited = (path) => {
+    if (!jsonStructure || path.length < 2) return false;
+
+    // 1) Ekstra-felt: path = [wrapperKey, fieldName]
+    if (path.length === 2 && typeof path[0] === 'string' && typeof path[1] === 'string') {
+      if (dirtyFields.has(`extra__${path[0]}__${path[1]}`)) return true;
+    }
+
+    // 2) Package-felt i gjeldende kategori
+    const rootIsArray = Array.isArray(jsonStructure.originalData);
+    const itemsKey = jsonStructure.itemsKey || 'pakker';
+    let pkgIdx = null;
+    let fieldName = null;
+
+    if (jsonStructure.hasCategories) {
+      // [mainKey, categoryIndex, itemsKey, pkgIndex, fieldName]
+      if (
+        path.length === 5 &&
+        path[0] === jsonStructure.mainKey &&
+        path[1] === selectedCategoryIndex &&
+        path[2] === itemsKey
+      ) {
+        pkgIdx = path[3];
+        fieldName = path[4];
+      }
+    } else if (rootIsArray) {
+      // [pkgIndex, fieldName]
+      if (path.length === 2 && typeof path[0] === 'number' && typeof path[1] === 'string') {
+        pkgIdx = path[0];
+        fieldName = path[1];
+      }
+    } else {
+      // [mainKey, pkgIndex, fieldName]
+      if (path.length === 3 && path[0] === jsonStructure.mainKey) {
+        pkgIdx = path[1];
+        fieldName = path[2];
+      }
+    }
+
+    if (pkgIdx === null || fieldName === null) return false;
+    const pkg = packages[pkgIdx];
+    if (!pkg) return false;
+    const internalId = pkg._internalId || pkg.id;
+    return dirtyFields.has(`pkg__${internalId}__${fieldName}`);
+  };
+
   const loadPackagesForCategory = (structure, newIndex) => {
     const itemsKey = structure.itemsKey || 'pakker';
     const categoryData = structure.data[newIndex];
@@ -1025,6 +1073,7 @@ function App() {
         onClose={() => setPreviewOpen(false)}
         jsonValue={computeLiveJson()}
         mainKey={jsonStructure?.mainKey}
+        isPathEdited={isPathEdited}
       />
       </div>
 

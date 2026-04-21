@@ -5,20 +5,23 @@ import './JsonPreviewPanel.css';
 /**
  * JsonPreviewPanel
  * Read-only "live mirror" av JSON som vil bli eksportert. Oppdateres
- * automatisk mens brukeren redigerer. Har egen kopier-knapp for rask tilgang.
+ * automatisk mens brukeren redigerer. Har egen kopier-knapp.
  *
  * Props:
- *   open           - bool, om panelet er synlig
- *   onClose        - callback for å lukke
- *   jsonValue      - nåværende komplette JSON-data (objekt eller array)
- *   mainKey        - filnavn-hint for kopier-bekreftelse
+ *   open            - bool, om panelet er synlig
+ *   onClose         - callback for å lukke
+ *   jsonValue       - nåværende komplette JSON-data
+ *   mainKey         - hint for meta-linjen
+ *   isPathEdited    - (path: (string|number)[]) => bool: sjekker om en leaf-verdi er endret
  */
-export default function JsonPreviewPanel({ open, onClose, jsonValue, mainKey }) {
+export default function JsonPreviewPanel({ open, onClose, jsonValue, mainKey, isPathEdited }) {
   if (!open) return null;
 
-  const jsonString = jsonValue ? JSON.stringify(jsonValue, null, 2) : '';
+  const hasData = jsonValue !== null && jsonValue !== undefined;
+  const jsonString = hasData ? JSON.stringify(jsonValue, null, 2) : '';
   const lineCount = jsonString ? jsonString.split('\n').length : 0;
   const byteSize = new Blob([jsonString]).size;
+  const rendered = hasData ? renderJson(jsonValue, isPathEdited || (() => false)) : '';
 
   const handleCopy = async () => {
     if (!jsonString) {
@@ -77,33 +80,57 @@ export default function JsonPreviewPanel({ open, onClose, jsonValue, mainKey }) 
       <pre
         className="jpp-code"
         data-testid="preview-code"
-        dangerouslySetInnerHTML={{ __html: highlightJson(jsonString) }}
+        dangerouslySetInnerHTML={{ __html: rendered }}
       />
     </aside>
   );
 }
 
-// Enkel syntax-highlighter (regex-basert, trygg fordi vi først escaper HTML)
-function highlightJson(json) {
-  if (!json) return '';
-  const escaped = json
+// ---------- Custom JSON renderer med per-path edited-highlighting ----------
+
+const INDENT = '  ';
+
+function escapeHtml(s) {
+  return String(s)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
 
-  return escaped.replace(
-    // eslint-disable-next-line no-useless-escape
-    /("(?:\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(?:\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-    (match) => {
-      let cls = 'jpp-num';
-      if (/^"/.test(match)) {
-        cls = /:$/.test(match) ? 'jpp-key' : 'jpp-str';
-      } else if (/true|false/.test(match)) {
-        cls = 'jpp-bool';
-      } else if (/null/.test(match)) {
-        cls = 'jpp-null';
-      }
-      return `<span class="${cls}">${match}</span>`;
-    }
-  );
+function renderJson(value, isPathEdited, path = [], depth = 0) {
+  if (value === null) return wrapLeaf('null', 'jpp-null', isPathEdited(path));
+  const t = typeof value;
+  if (t === 'boolean') return wrapLeaf(String(value), 'jpp-bool', isPathEdited(path));
+  if (t === 'number')  return wrapLeaf(String(value), 'jpp-num',  isPathEdited(path));
+  if (t === 'string')  return wrapLeaf(escapeHtml(JSON.stringify(value)), 'jpp-str', isPathEdited(path));
+
+  const pad = INDENT.repeat(depth);
+  const padInner = INDENT.repeat(depth + 1);
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '[]';
+    const items = value.map((item, i) => {
+      return padInner + renderJson(item, isPathEdited, [...path, i], depth + 1);
+    }).join(',\n');
+    return `[\n${items}\n${pad}]`;
+  }
+
+  if (t === 'object') {
+    const keys = Object.keys(value);
+    if (keys.length === 0) return '{}';
+    const items = keys.map((k) => {
+      const v = value[k];
+      const keyStr = `<span class="jpp-key">"${escapeHtml(k)}"</span>: `;
+      const valueStr = renderJson(v, isPathEdited, [...path, k], depth + 1);
+      return padInner + keyStr + valueStr;
+    }).join(',\n');
+    return `{\n${items}\n${pad}}`;
+  }
+
+  return '';
+}
+
+function wrapLeaf(text, colorClass, edited) {
+  const cls = edited ? `${colorClass} jpp-edited` : colorClass;
+  return `<span class="${cls}">${text}</span>`;
 }
