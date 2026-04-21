@@ -155,6 +155,7 @@ function App() {
         setJsonStructure({ 
           hasCategories: true, 
           data: mainArray,
+          originalData: data,  // Store WHOLE JSON including studenttilbud etc.
           mainKey: mainKey,
           itemsKey: itemsKey
         });
@@ -172,6 +173,7 @@ function App() {
         setJsonStructure({ 
           hasCategories: false, 
           data: mainArray,
+          originalData: data,  // Store WHOLE JSON
           mainKey: mainKey
         });
         setSelectedCategoryIndex(0);
@@ -240,6 +242,7 @@ function App() {
           setJsonStructure({ 
             hasCategories: true, 
             data: mainArray,
+            originalData: data,  // Store WHOLE JSON
             mainKey: mainKey,
             itemsKey: itemsKey
           });
@@ -254,6 +257,7 @@ function App() {
           setJsonStructure({ 
             hasCategories: false, 
             data: mainArray,
+            originalData: data,  // Store WHOLE JSON
             mainKey: mainKey
           });
         }
@@ -346,13 +350,13 @@ function App() {
     }
 
     try {
-      // Reconstruct the original JSON structure
-      let exportData = {};
+      // Start with original data to preserve ALL fields (like studenttilbud)
+      let exportData = { ...jsonStructure.originalData };
 
       if (jsonStructure.hasCategories) {
-        // Nested structure - rebuild with updated data
+        // Nested structure - update only the edited category
         const itemsKey = jsonStructure.itemsKey || 'pakker';
-        const updatedData = jsonStructure.data.map((category, idx) => {
+        const updatedCategories = jsonStructure.data.map((category, idx) => {
           if (idx === selectedCategoryIndex) {
             // Update current category with edited packages
             const cleanedPackages = packages.map(pkg => {
@@ -366,7 +370,7 @@ function App() {
           }
           return category;
         });
-        exportData[jsonStructure.mainKey] = updatedData;
+        exportData[jsonStructure.mainKey] = updatedCategories;
       } else {
         // Flat structure
         const cleanedPackages = packages.map(pkg => {
@@ -401,12 +405,12 @@ function App() {
     }
 
     try {
-      // Reconstruct the original JSON structure
-      let exportData = {};
+      // Start with original data to preserve ALL fields
+      let exportData = { ...jsonStructure.originalData };
 
       if (jsonStructure.hasCategories) {
         const itemsKey = jsonStructure.itemsKey || 'pakker';
-        const updatedData = jsonStructure.data.map((category, idx) => {
+        const updatedCategories = jsonStructure.data.map((category, idx) => {
           if (idx === selectedCategoryIndex) {
             const cleanedPackages = packages.map(pkg => {
               const { _internalId, ...cleanPkg } = pkg;
@@ -419,7 +423,7 @@ function App() {
           }
           return category;
         });
-        exportData[jsonStructure.mainKey] = updatedData;
+        exportData[jsonStructure.mainKey] = updatedCategories;
       } else {
         const cleanedPackages = packages.map(pkg => {
           const { _internalId, ...cleanPkg } = pkg;
