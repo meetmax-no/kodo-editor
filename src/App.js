@@ -8,6 +8,24 @@ import NewJsonModal from './components/NewJsonModal';
 import StatusModal from './components/StatusModal';
 import ExtraFieldsPanel from './components/ExtraFieldsPanel';
 
+// Litt moro: en samling undertitler som roteres tilfeldig ved hver side-lasting
+const SUBTITLES = [
+  'Built with love and care — uten trailing commas',
+  'Ingen JSON ble skadet under redigering',
+  'Fordi manuell JSON-redigering er så 2004',
+  'Din JSON, din struktur, null drama',
+  'Hvor {"key": "value"} blir til poesi',
+  'For deg som frykter Notepad og Vim',
+  'Struktur bevart, sjelefred inkludert',
+  '"Det virker på maskinen min" — nå på din også',
+  'Laget i Norge, sponset av koffein',
+  'Push med selvtillit, sov godt om natten',
+  'Null backend, null database, null bekymringer',
+  'Én editor for å redigere dem alle',
+];
+
+const randomSubtitle = () => SUBTITLES[Math.floor(Math.random() * SUBTITLES.length)];
+
 // Mock data kun for demo ved oppstart
 const MOCK_CATEGORIES = ["Demo"];
 const MOCK_PACKAGES = [
@@ -50,6 +68,8 @@ function App() {
   const [newJsonModalOpen, setNewJsonModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  // Velg en tilfeldig undertittel ved mount (ikke re-generer ved hver render)
+  const [subtitle] = useState(() => randomSubtitle());
   const [editingField, setEditingField] = useState({ source: 'package', packageId: null, fieldName: null, value: null, wrapperKey: null });
 
   // Load preset URLs from url.json on mount
@@ -669,7 +689,9 @@ function App() {
     <div className="app-container">
       <div className="editor-card">
         <h1 className="title" data-testid="app-title">Universal JSON Editor</h1>
-        <div className="subtitle">Rediger nestede JSON-filer trygt — uten å miste strukturen.</div>
+        <div className="subtitle" data-testid="app-subtitle" title="Oppdater siden for en ny setning">
+          {subtitle}
+        </div>
 
         {/* Last inn metode */}
         <div className="load-section">
