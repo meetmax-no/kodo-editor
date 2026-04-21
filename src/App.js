@@ -74,17 +74,26 @@ function App() {
       return rest;
     });
 
+    // When the original JSON root IS an array (not an object wrapping an array),
+    // we must emit an array — never spread it into an object (that would produce
+    // numeric-keyed fields AND duplicate the data under mainKey).
+    const rootIsArray = Array.isArray(jsonStructure.originalData);
+
     if (jsonStructure.hasCategories) {
       const itemsKey = jsonStructure.itemsKey || 'pakker';
       const updatedData = jsonStructure.data.map((cat, idx) =>
         idx === selectedCategoryIndex ? { ...cat, [itemsKey]: cleanedPackages } : cat
       );
-      const updatedOriginal = { ...jsonStructure.originalData, [jsonStructure.mainKey]: updatedData };
+      const updatedOriginal = rootIsArray
+        ? updatedData
+        : { ...jsonStructure.originalData, [jsonStructure.mainKey]: updatedData };
       const next = { ...jsonStructure, data: updatedData, originalData: updatedOriginal };
       setJsonStructure(next);
       return next;
     } else {
-      const updatedOriginal = { ...jsonStructure.originalData, [jsonStructure.mainKey]: cleanedPackages };
+      const updatedOriginal = rootIsArray
+        ? cleanedPackages
+        : { ...jsonStructure.originalData, [jsonStructure.mainKey]: cleanedPackages };
       const next = { ...jsonStructure, data: cleanedPackages, originalData: updatedOriginal };
       setJsonStructure(next);
       return next;
@@ -779,7 +788,7 @@ function App() {
         </div>
 
         {/* Ekstra felter — rot-objekter ved siden av hoved-arrayet */}
-        {jsonStructure?.originalData && (() => {
+        {jsonStructure?.originalData && !Array.isArray(jsonStructure.originalData) && (() => {
           const extras = Object.entries(jsonStructure.originalData).filter(
             ([k, v]) => k !== jsonStructure.mainKey && v !== null && typeof v === 'object' && !Array.isArray(v)
           );
