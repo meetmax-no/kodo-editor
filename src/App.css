@@ -409,6 +409,36 @@ body {
   border-color: #fecaca;
 }
 
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.btn-move {
+  padding: 4px 8px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 120ms ease;
+  font-family: var(--font-sans);
+  line-height: 1;
+}
+
+.btn-move:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: #c7d2fe;
+}
+
+.btn-move:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
 /* Edit button for modal-fields */
 .edit-btn {
   padding: 6px 10px;

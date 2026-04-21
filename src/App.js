@@ -411,6 +411,16 @@ function App() {
     }
   };
 
+  const handleMoveRow = (internalId, direction) => {
+    const idx = packages.findIndex((pkg) => (pkg._internalId || pkg.id) === internalId);
+    if (idx === -1) return;
+    const newIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= packages.length) return;
+    const copy = [...packages];
+    [copy[idx], copy[newIdx]] = [copy[newIdx], copy[idx]];
+    setPackages(copy);
+  };
+
   const handleInputChange = (internalId, field, value) => {
     setPackages(packages.map(pkg => 
       (pkg._internalId || pkg.id) === internalId ? { ...pkg, [field]: value } : pkg
@@ -818,12 +828,14 @@ function App() {
                       {fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </th>
                   ))}
-                  <th style={{ width: '100px' }}>Aksjon</th>
+                  <th style={{ width: '140px' }}>Aksjon</th>
                 </tr>
               </thead>
               <tbody>
                 {packages.map((pkg, pkgIndex) => {
                   const internalId = pkg._internalId || pkg.id || pkgIndex;
+                  const isFirst = pkgIndex === 0;
+                  const isLast = pkgIndex === packages.length - 1;
                   return (
                     <tr key={internalId}>
                       {fieldNames.map(fieldName => (
@@ -832,12 +844,34 @@ function App() {
                         </td>
                       ))}
                       <td>
-                        <button
-                          onClick={() => handleDeletePackage(internalId)}
-                          className="btn-delete"
-                        >
-                          🗑️
-                        </button>
+                        <div className="row-actions">
+                          <button
+                            onClick={() => handleMoveRow(internalId, 'up')}
+                            className="btn-move"
+                            disabled={isFirst}
+                            title="Flytt opp"
+                            data-testid={`move-up-btn-${pkgIndex}`}
+                          >
+                            ▲
+                          </button>
+                          <button
+                            onClick={() => handleMoveRow(internalId, 'down')}
+                            className="btn-move"
+                            disabled={isLast}
+                            title="Flytt ned"
+                            data-testid={`move-down-btn-${pkgIndex}`}
+                          >
+                            ▼
+                          </button>
+                          <button
+                            onClick={() => handleDeletePackage(internalId)}
+                            className="btn-delete"
+                            title="Slett rad"
+                            data-testid={`delete-btn-${pkgIndex}`}
+                          >
+                            🗑️
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
