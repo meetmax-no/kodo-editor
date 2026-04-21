@@ -4,12 +4,16 @@
     "url": "https://raw.githubusercontent.com/meetmax-no/tannlege-per/refs/heads/main/frontend/public/data/priser.json"
   },
   {
+    "name": "Tjenester (Tannlege Per)",
+    "url": "https://raw.githubusercontent.com/meetmax-no/tannlege-per/refs/heads/main/frontend/public/data/tjenester.json"
+  },
+  {
     "name": "Åpningstider (Tannlege Per)",
     "url": "https://raw.githubusercontent.com/meetmax-no/tannlege-per/refs/heads/main/frontend/public/data/apningstider.json"
   },
   {
-    "name": "Tjenester (Tannlege Per)",
-    "url": "https://raw.githubusercontent.com/meetmax-no/tannlege-per/refs/heads/main/frontend/public/data/tjenester.json"
+    "name": "JSON Editor - Default list",
+    "url": "https://raw.githubusercontent.com/meetmax-no/kodo-editor/refs/heads/main/public/url.json"
   },
   {
     "name": "Custom URL...",
