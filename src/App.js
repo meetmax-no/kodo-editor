@@ -45,13 +45,13 @@ function App() {
   const [colorModalOpen, setColorModalOpen] = useState(false);
   const [editingField, setEditingField] = useState({ packageId: null, fieldName: null, value: null });
 
-  // Load preset URLs from urls.json on mount
+  // Load preset URLs from url.json on mount
   useEffect(() => {
-    fetch('/urls.json')
+    fetch('/url.json')
       .then(res => res.json())
       .then(data => setPresetUrls(data))
       .catch(err => {
-        console.error('Could not load urls.json:', err);
+        console.error('Could not load url.json:', err);
         // Fallback to hardcoded
         setPresetUrls([
           { name: "Custom URL...", url: "" }
