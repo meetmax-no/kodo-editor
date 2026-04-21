@@ -310,23 +310,46 @@ function App() {
   };
 
   const handleAddPackage = () => {
-    const firstPackage = packages[0];
+    const template = packages[0];
     const newPackage = {};
-    
+
     // Generate unique ID
     const uniqueId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     newPackage._internalId = uniqueId;
-    
-    // Copy structure from first package with empty values
-    Object.keys(firstPackage).forEach(key => {
-      if (key.startsWith('_')) return;
-      const type = getFieldType(firstPackage[key]);
-      if (type === 'boolean') newPackage[key] = false;
-      else if (type === 'array') newPackage[key] = [];
-      else if (type === 'number') newPackage[key] = 0;
-      else newPackage[key] = '';
-    });
-    
+
+    if (template) {
+      // Copy structure from first package with empty values
+      Object.keys(template).forEach((key) => {
+        if (key.startsWith('_')) return;
+        const type = getFieldType(template[key]);
+        if (type === 'boolean') newPackage[key] = false;
+        else if (type === 'array') newPackage[key] = [];
+        else if (type === 'number') newPackage[key] = 0;
+        else newPackage[key] = '';
+      });
+    } else {
+      // No existing rows — try to derive schema from other categories
+      let schemaSource = null;
+      if (jsonStructure?.hasCategories) {
+        const itemsKey = jsonStructure.itemsKey || 'pakker';
+        const anyCat = jsonStructure.data.find((cat) => (cat[itemsKey] || []).length > 0);
+        if (anyCat) schemaSource = anyCat[itemsKey][0];
+      }
+      if (schemaSource) {
+        Object.keys(schemaSource).forEach((key) => {
+          if (key.startsWith('_')) return;
+          const type = getFieldType(schemaSource[key]);
+          if (type === 'boolean') newPackage[key] = false;
+          else if (type === 'array') newPackage[key] = [];
+          else if (type === 'number') newPackage[key] = 0;
+          else newPackage[key] = '';
+        });
+      } else {
+        // Completely blank — give a single navn field
+        newPackage.navn = '';
+      }
+    }
+
     setPackages([...packages, newPackage]);
   };
 
