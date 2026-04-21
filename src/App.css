@@ -216,6 +216,53 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Status-pille som åpner StatusModal */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: all 120ms ease;
+  white-space: nowrap;
+}
+
+.status-pill:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-subtle);
+}
+
+.status-pill .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  flex-shrink: 0;
+}
+
+.status-pill.loaded .status-dot {
+  background: var(--success);
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+}
+
+.status-pill.loaded .status-text { color: var(--text); }
+
+.status-pill .status-meta {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  padding-left: 6px;
+  border-left: 1px solid var(--border);
+  margin-left: 2px;
 }
 
 .nav-button {
@@ -229,6 +276,7 @@ body {
   cursor: pointer;
   font-family: var(--font-sans);
   transition: all 120ms ease;
+  white-space: nowrap;
 }
 
 .nav-button:hover:not(:disabled) {
@@ -239,12 +287,13 @@ body {
 .nav-button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .category-select {
-  flex: 1;
-  padding: 10px 14px;
+  width: 260px;
+  max-width: 100%;
+  padding: 8px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
   font-weight: 500;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text);
   background: var(--surface);
   font-family: var(--font-sans);

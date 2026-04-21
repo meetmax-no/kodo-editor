@@ -5,6 +5,7 @@ import ListEditModal from './components/ListEditModal';
 import IconPickerModal from './components/IconPickerModal';
 import ColorPickerModal from './components/ColorPickerModal';
 import NewJsonModal from './components/NewJsonModal';
+import StatusModal from './components/StatusModal';
 
 // Mock data kun for demo ved oppstart
 const MOCK_CATEGORIES = ["Demo"];
@@ -46,6 +47,7 @@ function App() {
   const [iconModalOpen, setIconModalOpen] = useState(false);
   const [colorModalOpen, setColorModalOpen] = useState(false);
   const [newJsonModalOpen, setNewJsonModalOpen] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [editingField, setEditingField] = useState({ packageId: null, fieldName: null, value: null });
 
   // Load preset URLs from url.json on mount
@@ -694,19 +696,30 @@ function App() {
           )}
         </div>
 
-        {/* Info/Error banner */}
-        {error ? (
+        {/* Error banner (kun hvis feil) */}
+        {error && (
           <div className="error-banner">
             ❌ <strong>Feil:</strong> {error}
           </div>
-        ) : (
-          <div className="info-banner">
-            ✅ <strong>{jsonStructure ? 'Data lastet' : 'Mock data'}:</strong> {categories.length} {jsonStructure?.hasCategories ? 'kategorier' : 'gruppe'} | {packages.length} items
-          </div>
         )}
 
-        {/* Kategori-navigering */}
+        {/* Kategori-navigering + status-pille på samme linje */}
         <div className="navigation">
+          <button
+            className={`status-pill ${jsonStructure ? 'loaded' : 'mock'}`}
+            onClick={() => setStatusModalOpen(true)}
+            data-testid="open-status-btn"
+            title="Klikk for detaljer"
+          >
+            <span className="status-dot" />
+            <span className="status-text">
+              {jsonStructure ? 'Data lastet' : 'Mock'}
+            </span>
+            <span className="status-meta">
+              {categories.length} · {packages.length}
+            </span>
+          </button>
+
           <button
             onClick={handlePrevious}
             disabled={selectedCategoryIndex === 0}
@@ -834,6 +847,15 @@ function App() {
         isOpen={newJsonModalOpen}
         onClose={() => setNewJsonModalOpen(false)}
         onCreate={handleCreateNewJson}
+      />
+
+      <StatusModal
+        isOpen={statusModalOpen}
+        onClose={() => setStatusModalOpen(false)}
+        jsonStructure={jsonStructure}
+        categories={categories}
+        packages={packages}
+        selectedCategoryIndex={selectedCategoryIndex}
       />
     </div>
   );
