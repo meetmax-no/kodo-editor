@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import './NewJsonModal.css';
 
 /**
@@ -79,7 +80,7 @@ export default function NewJsonModal({ isOpen, onClose, onCreate }) {
   const handleCreate = () => {
     const validFields = fields.filter((f) => f.name.trim() !== '');
     if (validFields.length === 0) {
-      alert('Legg til minst ett felt før du oppretter.');
+      toast.error('Legg til minst ett felt før du oppretter.');
       return;
     }
 

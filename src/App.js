@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import './App.css';
 import TextEditModal from './components/TextEditModal';
 import ListEditModal from './components/ListEditModal';
@@ -7,6 +8,7 @@ import ColorPickerModal from './components/ColorPickerModal';
 import NewJsonModal from './components/NewJsonModal';
 import StatusModal from './components/StatusModal';
 import ExtraFieldsPanel from './components/ExtraFieldsPanel';
+import { useConfirm } from './components/ConfirmModal';
 
 // Litt moro: en samling undertitler som roteres tilfeldig ved hver side-lasting
 const SUBTITLES = [
@@ -49,6 +51,7 @@ function getFieldType(value) {
 }
 
 function App() {
+  const confirm = useConfirm();
   const [selectedCategoryIndex, setSelectedCategoryIndex] = useState(0);
   const [packages, setPackages] = useState(MOCK_PACKAGES);
   const [categories, setCategories] = useState(MOCK_CATEGORIES);
@@ -179,11 +182,15 @@ function App() {
   // Load JSON from URL
   // Sjekk om brukeren vil forkaste ulagrede endringer.
   // Returnerer true hvis det er trygt å fortsette.
-  const confirmDiscardIfDirty = () => {
+  const confirmDiscardIfDirty = async () => {
     if (!isDirty) return true;
-    return window.confirm(
-      'Du har ulagrede endringer. Vil du laste inn en ny fil og forkaste dem?'
-    );
+    return await confirm({
+      title: 'Du har ulagrede endringer',
+      message: 'Vil du fortsette og forkaste endringene, eller avbryte for å lagre først?',
+      confirmLabel: 'Forkast endringer',
+      cancelLabel: 'Avbryt',
+      variant: 'danger',
+    });
   };
 
   const handleLoadJSON = async () => {
@@ -196,7 +203,7 @@ function App() {
       return;
     }
 
-    if (!confirmDiscardIfDirty()) return;
+    if (!(await confirmDiscardIfDirty())) return;
 
     setLoading(true);
     setError(null);
@@ -283,11 +290,11 @@ function App() {
   };
 
   // Load from file
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (!confirmDiscardIfDirty()) {
+    if (!(await confirmDiscardIfDirty())) {
       event.target.value = ''; // reset input så brukeren kan velge samme fil igjen
       return;
     }
@@ -460,8 +467,15 @@ function App() {
     setIsDirty(false);
   };
 
-  const handleDeletePackage = (internalId) => {
-    if (window.confirm('Er du sikker på at du vil slette denne pakken?')) {
+  const handleDeletePackage = async (internalId) => {
+    const ok = await confirm({
+      title: 'Slett denne pakken?',
+      message: 'Denne handlingen kan ikke angres.',
+      confirmLabel: 'Slett',
+      cancelLabel: 'Avbryt',
+      variant: 'danger',
+    });
+    if (ok) {
       setPackages(packages.filter(pkg => (pkg._internalId || pkg.id) !== internalId));
       setIsDirty(true);
     }
@@ -552,7 +566,7 @@ function App() {
   // Export functions
   const handleDownloadJSON = () => {
     if (!jsonStructure) {
-      alert('Ingen data å eksportere. Last inn eller opprett en JSON-fil først.');
+      toast.error('Ingen data å eksportere. Last inn eller opprett en JSON-fil først.');
       return;
     }
 
@@ -571,16 +585,16 @@ function App() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      alert('✅ JSON-fil lastet ned!');
+      toast.success('JSON-fil lastet ned');
       setIsDirty(false);
     } catch (err) {
-      alert('❌ Kunne ikke eksportere: ' + err.message);
+      toast.error('Kunne ikke eksportere: ' + err.message);
     }
   };
 
   const handleCopyToClipboard = async () => {
     if (!jsonStructure) {
-      alert('Ingen data å kopiere. Last inn eller opprett en JSON-fil først.');
+      toast.error('Ingen data å kopiere. Last inn eller opprett en JSON-fil først.');
       return;
     }
 
@@ -590,10 +604,10 @@ function App() {
 
       const jsonString = JSON.stringify(exportData, null, 2);
       await navigator.clipboard.writeText(jsonString);
-      alert('✅ JSON kopiert til clipboard!');
+      toast.success('JSON kopiert til clipboard');
       setIsDirty(false);
     } catch (err) {
-      alert('❌ Kunne ikke kopiere: ' + err.message);
+      toast.error('Kunne ikke kopiere: ' + err.message);
     }
   };
 
@@ -712,7 +726,7 @@ function App() {
             </button>
             <div style={{ flex: 1 }} />
             <button
-              onClick={() => { if (confirmDiscardIfDirty()) setNewJsonModalOpen(true); }}
+              onClick={async () => { if (await confirmDiscardIfDirty()) setNewJsonModalOpen(true); }}
               className="tab-button new-json-btn"
               data-testid="open-new-json-btn"
             >
@@ -968,7 +982,7 @@ function App() {
         <span className="footer-sep">·</span>
         <span>CONSULT</span>
         <span className="footer-sep">·</span>
-        <span className="footer-version">V1.0</span>
+        <span className="footer-version">V1.1</span>
       </footer>
 
       {/* Modals */}

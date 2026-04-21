@@ -1,0 +1,89 @@
+/* ConfirmModal — minimal, matcher NewJsonModal */
+
+.cm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 24px;
+  animation: cm-fade 140ms ease-out;
+}
+
+@keyframes cm-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.cm-dialog {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 22px 24px 20px;
+  box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.25),
+              0 0 0 1px rgba(15, 23, 42, 0.05);
+  animation: cm-rise 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes cm-rise {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.cm-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+
+.cm-message {
+  font-size: 14px;
+  color: #475569;
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.cm-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cm-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 120ms ease;
+  border: 1px solid transparent;
+}
+
+.cm-btn-ghost {
+  background: transparent;
+  color: #475569;
+  border-color: #e2e8f0;
+}
+
+.cm-btn-ghost:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.cm-btn-primary {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.cm-btn-primary:hover { background: #1e293b; }
+
+.cm-btn-danger {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.cm-btn-danger:hover { background: #b91c1c; }
