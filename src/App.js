@@ -900,6 +900,16 @@ function App() {
         </div>
       </div>
 
+      <footer className="app-footer" data-testid="app-footer">
+        <span className="footer-brand">DESIGNED BY KO</span>
+        <span className="footer-sep">|</span>
+        <span>DO</span>
+        <span className="footer-sep">·</span>
+        <span>CONSULT</span>
+        <span className="footer-sep">·</span>
+        <span className="footer-version">V1.0</span>
+      </footer>
+
       {/* Modals */}
       <TextEditModal
         isOpen={textModalOpen}

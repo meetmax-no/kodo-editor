@@ -564,3 +564,40 @@ body {
   .export-section { flex-direction: column; }
   .navigation { flex-wrap: wrap; }
 }
+
+/* ============================================================
+   Footer
+   ============================================================ */
+
+.app-footer {
+  max-width: 1200px;
+  margin: 24px auto 0;
+  padding: 20px 36px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+.footer-brand {
+  color: var(--text-soft);
+}
+
+.footer-sep {
+  opacity: 0.4;
+}
+
+.footer-version {
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.08em;
+}
+
