@@ -49,6 +49,7 @@ function App() {
   const [colorModalOpen, setColorModalOpen] = useState(false);
   const [newJsonModalOpen, setNewJsonModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const [editingField, setEditingField] = useState({ source: 'package', packageId: null, fieldName: null, value: null, wrapperKey: null });
 
   // Load preset URLs from url.json on mount
@@ -65,6 +66,17 @@ function App() {
         ]);
       });
   }, []);
+
+  // Advar brukeren hvis han prøver å lukke vinduet med ulagrede endringer
+  useEffect(() => {
+    if (!isDirty) return undefined;
+    const handler = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
 
   // Persist current packages back into jsonStructure.data for the current category.
   // Returns an updated jsonStructure clone that callers can use immediately.
@@ -145,6 +157,15 @@ function App() {
   };
 
   // Load JSON from URL
+  // Sjekk om brukeren vil forkaste ulagrede endringer.
+  // Returnerer true hvis det er trygt å fortsette.
+  const confirmDiscardIfDirty = () => {
+    if (!isDirty) return true;
+    return window.confirm(
+      'Du har ulagrede endringer. Vil du laste inn en ny fil og forkaste dem?'
+    );
+  };
+
   const handleLoadJSON = async () => {
     const url = selectedPreset === presetUrls.length - 1 
       ? customUrl 
@@ -154,6 +175,8 @@ function App() {
       setError('Vennligst skriv inn en URL');
       return;
     }
+
+    if (!confirmDiscardIfDirty()) return;
 
     setLoading(true);
     setError(null);
@@ -232,6 +255,7 @@ function App() {
       }
 
       setLoading(false);
+      setIsDirty(false);
     } catch (err) {
       setError(`Kunne ikke laste JSON: ${err.message}`);
       setLoading(false);
@@ -242,6 +266,11 @@ function App() {
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
+
+    if (!confirmDiscardIfDirty()) {
+      event.target.value = ''; // reset input så brukeren kan velge samme fil igjen
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -316,6 +345,7 @@ function App() {
 
         setSelectedCategoryIndex(0);
         setLoading(false);
+        setIsDirty(false);
       } catch (err) {
         setError(`Kunne ikke lese fil: ${err.message}`);
         setLoading(false);
@@ -325,6 +355,7 @@ function App() {
   };
 
   const handleAddPackage = () => {
+    setIsDirty(true);
     const template = packages[0];
     const newPackage = {};
 
@@ -406,11 +437,13 @@ function App() {
     }
     setError(null);
     setNewJsonModalOpen(false);
+    setIsDirty(false);
   };
 
   const handleDeletePackage = (internalId) => {
     if (window.confirm('Er du sikker på at du vil slette denne pakken?')) {
       setPackages(packages.filter(pkg => (pkg._internalId || pkg.id) !== internalId));
+      setIsDirty(true);
     }
   };
 
@@ -422,12 +455,14 @@ function App() {
     const copy = [...packages];
     [copy[idx], copy[newIdx]] = [copy[newIdx], copy[idx]];
     setPackages(copy);
+    setIsDirty(true);
   };
 
   const handleInputChange = (internalId, field, value) => {
     setPackages(packages.map(pkg => 
       (pkg._internalId || pkg.id) === internalId ? { ...pkg, [field]: value } : pkg
     ));
+    setIsDirty(true);
   };
 
   // Open appropriate modal based on field type
@@ -458,6 +493,7 @@ function App() {
       },
     };
     setJsonStructure({ ...jsonStructure, originalData: updatedOriginal });
+    setIsDirty(true);
   };
 
   // Open modal for an extra field (longtext / array / color / icon)
@@ -516,6 +552,7 @@ function App() {
       URL.revokeObjectURL(url);
 
       alert('✅ JSON-fil lastet ned!');
+      setIsDirty(false);
     } catch (err) {
       alert('❌ Kunne ikke eksportere: ' + err.message);
     }
@@ -534,6 +571,7 @@ function App() {
       const jsonString = JSON.stringify(exportData, null, 2);
       await navigator.clipboard.writeText(jsonString);
       alert('✅ JSON kopiert til clipboard!');
+      setIsDirty(false);
     } catch (err) {
       alert('❌ Kunne ikke kopiere: ' + err.message);
     }
@@ -652,7 +690,7 @@ function App() {
             </button>
             <div style={{ flex: 1 }} />
             <button
-              onClick={() => setNewJsonModalOpen(true)}
+              onClick={() => { if (confirmDiscardIfDirty()) setNewJsonModalOpen(true); }}
               className="tab-button new-json-btn"
               data-testid="open-new-json-btn"
             >
@@ -754,14 +792,15 @@ function App() {
         {/* Kategori-navigering + status-pille på samme linje */}
         <div className="navigation">
           <button
-            className={`status-pill ${jsonStructure ? 'loaded' : 'mock'}`}
+            className={`status-pill ${jsonStructure ? 'loaded' : 'mock'} ${isDirty ? 'dirty' : ''}`}
             onClick={() => setStatusModalOpen(true)}
             data-testid="open-status-btn"
-            title="Klikk for detaljer"
+            title={isDirty ? 'Du har ulagrede endringer' : 'Klikk for detaljer'}
           >
             <span className="status-dot" />
             <span className="status-text">
               {jsonStructure ? 'Data lastet' : 'Mock'}
+              {isDirty && <span className="status-dirty-marker" aria-label="ulagrede endringer">●</span>}
             </span>
             <span className="status-meta">
               {categories.length} · {packages.length}

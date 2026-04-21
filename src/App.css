@@ -257,6 +257,24 @@ body {
 
 .status-pill.loaded .status-text { color: var(--text); }
 
+.status-pill.dirty {
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
+.status-dirty-marker {
+  color: #d97706;
+  font-size: 10px;
+  margin-left: 6px;
+  line-height: 1;
+  animation: dirty-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes dirty-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
 .status-pill .status-meta {
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
@@ -586,7 +604,7 @@ body {
 }
 
 .footer-brand {
-  color: var(--text-soft);
+  color: var(--text-muted);
 }
 
 .footer-sep {
@@ -594,10 +612,7 @@ body {
 }
 
 .footer-version {
-  color: var(--accent);
-  background: var(--accent-soft);
-  padding: 2px 8px;
-  border-radius: 999px;
+  color: var(--text-muted);
   letter-spacing: 0.08em;
 }
 
