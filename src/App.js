@@ -72,6 +72,7 @@ function App() {
   const [newJsonModalOpen, setNewJsonModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [dirtyFields, setDirtyFields] = useState(new Set());
   const [previewOpen, setPreviewOpen] = useState(false);
   // Velg en tilfeldig undertittel ved mount (ikke re-generer ved hver render)
   const [subtitle] = useState(() => randomSubtitle());
@@ -307,7 +308,7 @@ function App() {
       }
 
       setLoading(false);
-      setIsDirty(false);
+      setIsDirty(false); setDirtyFields(new Set());
     } catch (err) {
       setError(`Kunne ikke laste JSON: ${err.message}`);
       setLoading(false);
@@ -397,7 +398,7 @@ function App() {
 
         setSelectedCategoryIndex(0);
         setLoading(false);
-        setIsDirty(false);
+        setIsDirty(false); setDirtyFields(new Set());
       } catch (err) {
         setError(`Kunne ikke lese fil: ${err.message}`);
         setLoading(false);
@@ -489,7 +490,7 @@ function App() {
     }
     setError(null);
     setNewJsonModalOpen(false);
-    setIsDirty(false);
+    setIsDirty(false); setDirtyFields(new Set());
   };
 
   const handleDeletePackage = async (internalId) => {
@@ -522,6 +523,7 @@ function App() {
       (pkg._internalId || pkg.id) === internalId ? { ...pkg, [field]: value } : pkg
     ));
     setIsDirty(true);
+    setDirtyFields((prev) => new Set(prev).add(`pkg__${internalId}__${field}`));
   };
 
   // Open appropriate modal based on field type
@@ -553,6 +555,7 @@ function App() {
     };
     setJsonStructure({ ...jsonStructure, originalData: updatedOriginal });
     setIsDirty(true);
+    setDirtyFields((prev) => new Set(prev).add(`extra__${wrapperKey}__${fieldName}`));
   };
 
   // Open modal for an extra field (longtext / array / color / icon)
@@ -611,7 +614,7 @@ function App() {
       URL.revokeObjectURL(url);
 
       toast.success('JSON-fil lastet ned');
-      setIsDirty(false);
+      setIsDirty(false); setDirtyFields(new Set());
     } catch (err) {
       toast.error('Kunne ikke eksportere: ' + err.message);
     }
@@ -630,7 +633,7 @@ function App() {
       const jsonString = JSON.stringify(exportData, null, 2);
       await navigator.clipboard.writeText(jsonString);
       toast.success('JSON kopiert til clipboard');
-      setIsDirty(false);
+      setIsDirty(false); setDirtyFields(new Set());
     } catch (err) {
       toast.error('Kunne ikke kopiere: ' + err.message);
     }
@@ -648,6 +651,8 @@ function App() {
     const isIconField = fieldName === 'ikon' || fieldName === 'icon';
     const isColorField = fieldName === 'color' || fieldName === 'farge';
     const internalId = pkg._internalId || pkg.id;
+    const isEdited = dirtyFields.has(`pkg__${internalId}__${fieldName}`);
+    const dirtyClass = isEdited ? ' edited' : '';
 
     // Boolean checkbox
     if (fieldType === 'boolean') {
@@ -656,7 +661,7 @@ function App() {
           type="checkbox"
           checked={value}
           onChange={(e) => handleInputChange(internalId, fieldName, e.target.checked)}
-          className="checkbox"
+          className={`checkbox${dirtyClass}`}
         />
       );
     }
@@ -665,7 +670,7 @@ function App() {
     if (fieldType === 'array') {
       return (
         <button
-          className="edit-btn"
+          className={`edit-btn${dirtyClass}`}
           onClick={() => handleEditClick(internalId, fieldName, value)}
         >
           📝 {value.length} items
@@ -677,7 +682,7 @@ function App() {
     if (fieldType === 'longtext') {
       return (
         <button
-          className="edit-btn"
+          className={`edit-btn${dirtyClass}`}
           onClick={() => handleEditClick(internalId, fieldName, value)}
         >
           ✏️ Rediger
@@ -689,7 +694,7 @@ function App() {
     if (isColorField) {
       return (
         <button
-          className="edit-btn color-preview-btn"
+          className={`edit-btn color-preview-btn${dirtyClass}`}
           onClick={() => handleEditClick(internalId, fieldName, value)}
         >
           <div 
@@ -705,7 +710,7 @@ function App() {
     if (isIconField) {
       return (
         <button
-          className="edit-btn"
+          className={`edit-btn${dirtyClass}`}
           onClick={() => handleEditClick(internalId, fieldName, value)}
         >
           🎨 {value || 'Velg'}
@@ -719,7 +724,7 @@ function App() {
         type={fieldType === 'number' ? 'number' : 'text'}
         value={value}
         onChange={(e) => handleInputChange(internalId, fieldName, e.target.value)}
-        className="table-input"
+        className={`table-input${dirtyClass}`}
       />
     );
   };
@@ -926,6 +931,7 @@ function App() {
               getFieldType={getFieldType}
               onChange={handleExtraFieldChange}
               onEditField={handleEditExtraField}
+              dirtyFields={dirtyFields}
             />
           );
         })()}

@@ -14,7 +14,7 @@ import './ExtraFieldsPanel.css';
  *                   Brukes for felt som trenger modal (longtext, array, color, icon)
  *   getFieldType  - funksjon fra App som detekterer felt-type
  */
-export default function ExtraFieldsPanel({ extraEntries, onChange, onEditField, getFieldType }) {
+export default function ExtraFieldsPanel({ extraEntries, onChange, onEditField, getFieldType, dirtyFields }) {
   const [openMap, setOpenMap] = useState(() => {
     // Default: åpne alle
     const initial = {};
@@ -60,13 +60,14 @@ export default function ExtraFieldsPanel({ extraEntries, onChange, onEditField, 
                     const type = getFieldType(value);
                     const isIcon = fieldName === 'ikon' || fieldName === 'icon';
                     const isColor = fieldName === 'color' || fieldName === 'farge';
+                    const isEdited = dirtyFields?.has(`extra__${wrapperKey}__${fieldName}`);
 
                     return (
                       <div key={fieldName} className="efp-field">
                         <label className="efp-field-label">{fieldName}</label>
                         <div className="efp-field-control">
                           {renderControl({
-                            value, type, isIcon, isColor, fieldName, wrapperKey,
+                            value, type, isIcon, isColor, fieldName, wrapperKey, isEdited,
                             onChange, onEditField,
                           })}
                         </div>
@@ -83,14 +84,15 @@ export default function ExtraFieldsPanel({ extraEntries, onChange, onEditField, 
   );
 }
 
-function renderControl({ value, type, isIcon, isColor, fieldName, wrapperKey, onChange, onEditField }) {
+function renderControl({ value, type, isIcon, isColor, fieldName, wrapperKey, isEdited, onChange, onEditField }) {
   const testId = `extra-field-${wrapperKey}-${fieldName}`;
+  const dirtyClass = isEdited ? ' edited' : '';
 
   if (type === 'boolean') {
     return (
       <input
         type="checkbox"
-        className="efp-checkbox"
+        className={`efp-checkbox${dirtyClass}`}
         checked={value}
         onChange={(e) => onChange(wrapperKey, fieldName, e.target.checked)}
         data-testid={testId}
@@ -101,7 +103,7 @@ function renderControl({ value, type, isIcon, isColor, fieldName, wrapperKey, on
   if (type === 'array') {
     return (
       <button
-        className="efp-edit-btn"
+        className={`efp-edit-btn${dirtyClass}`}
         onClick={() => onEditField(wrapperKey, fieldName, value, 'array')}
         data-testid={testId}
       >
@@ -113,7 +115,7 @@ function renderControl({ value, type, isIcon, isColor, fieldName, wrapperKey, on
   if (isColor) {
     return (
       <button
-        className="efp-edit-btn color"
+        className={`efp-edit-btn color${dirtyClass}`}
         onClick={() => onEditField(wrapperKey, fieldName, value, 'color')}
         data-testid={testId}
       >
@@ -126,7 +128,7 @@ function renderControl({ value, type, isIcon, isColor, fieldName, wrapperKey, on
   if (isIcon) {
     return (
       <button
-        className="efp-edit-btn"
+        className={`efp-edit-btn${dirtyClass}`}
         onClick={() => onEditField(wrapperKey, fieldName, value, 'icon')}
         data-testid={testId}
       >
@@ -138,7 +140,7 @@ function renderControl({ value, type, isIcon, isColor, fieldName, wrapperKey, on
   if (type === 'longtext') {
     return (
       <button
-        className="efp-edit-btn"
+        className={`efp-edit-btn${dirtyClass}`}
         onClick={() => onEditField(wrapperKey, fieldName, value, 'longtext')}
         data-testid={testId}
       >
@@ -150,7 +152,7 @@ function renderControl({ value, type, isIcon, isColor, fieldName, wrapperKey, on
   return (
     <input
       type={type === 'number' ? 'number' : 'text'}
-      className="efp-input"
+      className={`efp-input${dirtyClass}`}
       value={value ?? ''}
       onChange={(e) => onChange(wrapperKey, fieldName, e.target.value)}
       data-testid={testId}
