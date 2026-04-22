@@ -62,43 +62,93 @@ Rules:
 
 ---
 
-## V1.0 Close-out
-All core user requirements delivered. The app is production-ready for its intended use case (editing Tannlege Per's JSON files). Repository at `meetmax-no/kodo-editor`, deployed via "Save to GitHub".
+## V2.0 Close-out
+V2.0 shipped 2026-04-21 with live JSON preview, row reordering, extra-fields panel, toast+confirm polish, and in-preview highlighting of edited values. All user requirements through this session delivered.
 
 ---
 
-## Roadmap — V2.0 candidates
+## V3.0 — Complex JSON structures (P0 — MUST fix)
+
+### Problem
+Editor was built assuming **one primary array** + optional wrapper objects. Real-world config files have richer structures that break the assumption.
+
+### Reproducing case
+`https://raw.githubusercontent.com/meetmax-no/Calender/refs/heads/main/public/config.json` exposes 3 concrete limitations:
+
+1. **Dictionary with object values** — `taskTypes.TRACK1 = {label, icon, color, ...}` renders as `[object Object]` in an unusable input.
+2. **Multiple top-level arrays** — editor picks the first (`palette`) and silently hides the rest (`backgrounds` array of 9 items is invisible).
+3. **Root-level primitives** — `version` and `updatedAt` (strings on root) are preserved on export but can't be edited.
+
+### Chosen approach: A — Section picker
+Agreed direction (user + agent): add a "section picker" that detects multi-section configs and lets the user pick one section at a time to edit. Accepted trade-off: editing two sections means loading the file twice. Pragmatic over fancy.
+
+### Implementation plan
+
+**Detection phase** — after load, classify each top-level key into one of:
+| Type | Example | Rendering mode |
+|---|---|---|
+| `array-of-objects` | `palette`, `backgrounds` | Dagens tabell (eksisterer) |
+| `dict-of-objects` | `taskTypes` | Tabell med key-kolonne + objektfelter (ny mode) |
+| `dict-of-primitives` | `holidays`, `commercialDays` | Key/value-tabell (nesten eksisterer) |
+| `primitive` | `version`, `updatedAt` | Header-inputs øverst (ny mode) |
+
+**UI changes**
+- If file has ≥2 editable sections → show section picker dropdown/tabs above the category navigator
+- Each section type renders with its own tailored view
+- Export always rebuilds the complete original structure; unedited sections pass through untouched
+- Dirty-state tracking per section (kan vise 🟡-prikk per seksjon)
+
+**Affected files / estimated effort**
+- `/app/src/App.js` — detection + routing (~2 timer)
+- `/app/src/components/SectionPicker.{js,css}` — NY (~45 min)
+- `/app/src/components/DictObjectsTable.{js,css}` — NY for `dict-of-objects` (~1.5 timer)
+- `/app/src/components/RootPrimitivesPanel.{js,css}` — NY for root scalar fields (~30 min)
+- Refactor `App.js` (kan ikke lenger utsettes) — extract `useJsonLoader`, `useSection` hooks (~2 timer)
+
+**Total estimate:** ~6-8 timer fokusert arbeid. Vel verdt det for å gjøre editoren virkelig universell.
+
+### Acceptance criteria
+- [ ] Calender/config.json laster inn og viser seksjonsvelger med 6 seksjoner
+- [ ] `taskTypes.TRACK1` er redigerbar (ikke `[object Object]`)
+- [ ] `backgrounds` er redigerbar
+- [ ] `version` og `updatedAt` kan redigeres via header-panel
+- [ ] Round-trip: last inn → rediger én seksjon → eksporter → alle andre seksjoner uendret
+- [ ] Gamle flat- og nested-filer (priser.json, tjenester.json) fungerer fortsatt uendret
+- [ ] `holidays` og `commercialDays` fungerer som før
+
+---
+
+## Roadmap — V2.x / V3.x backlog
 
 ### 🥇 High value, low effort
 1. **Undo / Redo** (Cmd+Z / Cmd+Shift+Z) — single action-history stack, low risk
 2. **Diff-visning før eksport** — "Disse feltene endret du" summary before download
-3. **Husk sist brukte URL** — `localStorage` recall of last preset + category
-4. **Live JSON preview-panel** — collapsible side-panel showing the current exportable JSON
+3. **Husk sist brukte URL** — `localStorage` recall of last preset + section
 
 ### 🥈 Bigger features
-5. **Drag-and-drop sortering** av rader (replace ▲/▼) — `@dnd-kit/core`
-6. **Refactor `App.js`** (~1000 lines) into `useJsonLoader`, `useCategoryNav`, `useDirty` hooks + `<DataTable>`, `<LoadPanel>` components
-7. **Custom key overrides** — when structure auto-detection fails, let user pick `categoryKey` and `itemsKey` manually in a "Avansert"-mode modal
-8. **Round-trip tests** — pytest or vitest suite that `load → edit → export → structurally-equal` for each preset
-9. **Shareable URL** — gzip+base64-encode current state into URL-hash for collaboration without a backend
+4. **Drag-and-drop sortering** av rader (replace ▲/▼) — `@dnd-kit/core`
+5. **Round-trip tests** — pytest or vitest suite that `load → edit → export → structurally-equal` for each preset (critical before V3.0 lands)
+6. **Shareable URL** — gzip+base64-encode current state into URL-hash for collaboration without a backend
 
 ### 🥉 Nice-to-haves
-10. **Tooltip / expanded column** for long text in tables
-11. **Bulk-edit** — select multiple rows and change one field
-12. **Search / filter** within a category
-13. **Import JSON Schema** — validate against a `.schema.json`
-14. **Export formats** — YAML / CSV in addition to JSON
-15. **Keyboard shortcuts** — J/K navigation, Enter to edit, etc.
+7. **Tooltip / expanded column** for long text in tables
+8. **Bulk-edit** — select multiple rows and change one field
+9. **Search / filter** within a section
+10. **Import JSON Schema** — validate against a `.schema.json`
+11. **Export formats** — YAML / CSV in addition to JSON
+12. **Keyboard shortcuts** — J/K navigation, Enter to edit, etc.
 
 ---
 
 ## Files of reference
-- `/app/src/App.js` — main (~1000 lines; refactor candidate)
+- `/app/src/App.js` — main (~1100 lines; MUST refactor before V3.0)
 - `/app/src/components/NewJsonModal.{js,css}`
 - `/app/src/components/StatusModal.{js,css}`
 - `/app/src/components/ExtraFieldsPanel.{js,css}`
 - `/app/src/components/ConfirmModal.{js,css}`
+- `/app/src/components/JsonPreviewPanel.{js,css}`
 - `/app/src/components/{TextEditModal,ListEditModal,IconPickerModal,ColorPickerModal}.js`
 - `/app/public/url.json`
 - `/app/src/App.css`, `/app/src/index.css`
 - `/app/public/index.html` — title: "KoDo-Editor"
+
