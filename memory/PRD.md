@@ -99,13 +99,14 @@ Agreed direction (user + agent): add a "section picker" that detects multi-secti
 - Dirty-state tracking per section (kan vise 🟡-prikk per seksjon)
 
 **Affected files / estimated effort**
-- `/app/src/App.js` — detection + routing (~2 timer)
-- `/app/src/components/SectionPicker.{js,css}` — NY (~45 min)
-- `/app/src/components/DictObjectsTable.{js,css}` — NY for `dict-of-objects` (~1.5 timer)
-- `/app/src/components/RootPrimitivesPanel.{js,css}` — NY for root scalar fields (~30 min)
-- Refactor `App.js` (kan ikke lenger utsettes) — extract `useJsonLoader`, `useSection` hooks (~2 timer)
+- `/app/src/App.js` — detection + routing (~10 min)
+- `/app/src/components/SectionPicker.{js,css}` — NY (~10 min)
+- `/app/src/components/DictObjectsTable.{js,css}` — NY for `dict-of-objects` (~15 min)
+- `/app/src/components/RootPrimitivesPanel.{js,css}` — NY for root scalar fields (~5 min)
+- Testing mot config.json + regresjon på priser.json (~10 min)
 
-**Total estimate:** ~6-8 timer fokusert arbeid. Vel verdt det for å gjøre editoren virkelig universell.
+**Total estimate:** ~45-60 min fokusert arbeid i én økt.
+_(Original estimat på 6-8 timer gjaldt manuell koding fra bunnen. Med eksisterende mønstre fra ExtraFieldsPanel, StatusModal, JsonPreviewPanel m.fl. å gjenbruke går det mye raskere.)_
 
 ### Acceptance criteria
 - [ ] Calender/config.json laster inn og viser seksjonsvelger med 6 seksjoner
@@ -137,6 +138,9 @@ Agreed direction (user + agent): add a "section picker" that detects multi-secti
 10. **Import JSON Schema** — validate against a `.schema.json`
 11. **Export formats** — YAML / CSV in addition to JSON
 12. **Keyboard shortcuts** — J/K navigation, Enter to edit, etc.
+
+### 🔧 V4/V5 — only if needed
+13. **Refactor `App.js`** into hooks + smaller components — deferred. App fungerer fint i dag; premature refactoring gir unødvendig kompleksitet. Tas opp igjen hvis kodebase-navigering eller ytelse blir et reelt problem.
 
 ---
 
