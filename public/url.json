@@ -12,6 +12,10 @@
     "url": "https://raw.githubusercontent.com/meetmax-no/tannlege-per/refs/heads/main/frontend/public/data/apningstider.json"
   },
   {
+    "name": "KoDo - ToDo Planer",
+    "url": "https://raw.githubusercontent.com/meetmax-no/Calender/refs/heads/main/public/config.json"
+  },
+  {
     "name": "JSON Editor - Default list",
     "url": "https://raw.githubusercontent.com/meetmax-no/kodo-editor/refs/heads/main/public/url.json"
   },
