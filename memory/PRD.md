@@ -67,6 +67,21 @@ V2.0 shipped 2026-04-21 with live JSON preview, row reordering, extra-fields pan
 
 ---
 
+## V4.0 Close-out 🎉
+V4.0 shipped 2026-04-24. Adds Undo, dynamic field addition, and non-blocking field validation with invalid-count badge.
+
+### Changelog — V4.0
+- **Undo (no redo)** — snapshot-based stack (max 50 steps) captures state before every mutation. Triggered via Cmd/Ctrl+Z globally (ignored when typing in inputs) or via the ↶ Angre button in the navigation row.
+- **Legg til felt (add field/column)** — button next to "Legg til rad" opens a small modal with name + type (text/longtext/number/boolean/array). New field is applied to all rows in the active section with type-appropriate default value.
+- **Field validation** — non-blocking hint-based validation for hex colors, dates (YYYY-MM-DD), times (HH:MM or HH-HH), email, URL. Invalid fields get red border + ⚠ icon. Status pill shows `⚠ N` badge when there are invalid fields. User is never prevented from exporting.
+- Footer bumped to V4.0.
+
+### New files
+- `/app/src/utils/fieldValidators.js`
+- `/app/src/components/AddFieldModal.{js,css}`
+
+---
+
 ## V3.0 Close-out 🎉
 V3.0 shipped 2026-04-24. Complex JSON structures now fully supported via auto-detected section picker. Calender/config.json renders all 6 sections cleanly. Regression on priser.json, url.json, and tjenester.json still works.
 

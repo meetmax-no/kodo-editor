@@ -11,7 +11,9 @@ import ExtraFieldsPanel from './components/ExtraFieldsPanel';
 import JsonPreviewPanel from './components/JsonPreviewPanel';
 import SectionPicker from './components/SectionPicker';
 import RootPrimitivesPanel from './components/RootPrimitivesPanel';
+import AddFieldModal from './components/AddFieldModal';
 import { useConfirm } from './components/ConfirmModal';
+import { validateField, countInvalid } from './utils/fieldValidators';
 import {
   SECTION_TYPE,
   ROW_KEY_FIELD,
@@ -91,6 +93,9 @@ function App() {
   const [activeSectionType, setActiveSectionType] = useState(null);
   const [rootPrimitives, setRootPrimitives] = useState(null); // { key: value } when root-primitives seksjon er valgt
   const [dirtySections, setDirtySections] = useState(new Set());
+  const [addFieldModalOpen, setAddFieldModalOpen] = useState(false);
+  // Undo: stack av snapshots. Hver snapshot er {packages, rootPrimitives, jsonStructure, dirtyFields}
+  const [undoStack, setUndoStack] = useState([]);
   // Velg en tilfeldig undertittel ved mount (ikke re-generer ved hver render)
   const [subtitle] = useState(() => randomSubtitle());
   const [editingField, setEditingField] = useState({ source: 'package', packageId: null, fieldName: null, value: null, wrapperKey: null });
@@ -547,7 +552,7 @@ function App() {
       const data = await response.json();
       initializeFromData(data, 'loaded');
       setLoading(false);
-      setIsDirty(false); setDirtyFields(new Set()); setDirtySections(new Set());
+      setIsDirty(false); setDirtyFields(new Set()); setDirtySections(new Set()); setUndoStack([]);
     } catch (err) {
       setError(`Kunne ikke laste JSON: ${err.message}`);
       setLoading(false);
@@ -575,7 +580,7 @@ function App() {
         const data = JSON.parse(text);
         initializeFromData(data, 'file');
         setLoading(false);
-        setIsDirty(false); setDirtyFields(new Set()); setDirtySections(new Set());
+        setIsDirty(false); setDirtyFields(new Set()); setDirtySections(new Set()); setUndoStack([]);
       } catch (err) {
         setError(`Kunne ikke lese fil: ${err.message}`);
         setLoading(false);
@@ -585,6 +590,7 @@ function App() {
   };
 
   const handleAddPackage = () => {
+    pushUndo();
     setIsDirty(true);
     const template = packages[0];
     const newPackage = {};
@@ -627,6 +633,24 @@ function App() {
     }
 
     setPackages([...packages, newPackage]);
+  };
+
+  // V4.0: Legg til nytt felt (kolonne) i alle rader i gjeldende seksjon
+  const handleAddField = (fieldName, fieldType) => {
+    pushUndo();
+    const defaults = {
+      text: '',
+      longtext: '',
+      number: 0,
+      boolean: false,
+      array: [],
+    };
+    const defaultValue = defaults[fieldType] ?? '';
+    setPackages((prev) => prev.map((p) => ({ ...p, [fieldName]: defaultValue })));
+    setIsDirty(true);
+    if (activeSectionKey) setDirtySections((prev) => new Set(prev).add(activeSectionKey));
+    setAddFieldModalOpen(false);
+    toast.success(`Feltet "${fieldName}" lagt til`);
   };
 
   // Create a new JSON from scratch via NewJsonModal
@@ -673,7 +697,7 @@ function App() {
     }
     setError(null);
     setNewJsonModalOpen(false);
-    setIsDirty(false); setDirtyFields(new Set()); setDirtySections(new Set());
+    setIsDirty(false); setDirtyFields(new Set()); setDirtySections(new Set()); setUndoStack([]);
   };
 
   const handleDeletePackage = async (internalId) => {
@@ -685,8 +709,10 @@ function App() {
       variant: 'danger',
     });
     if (ok) {
+      pushUndo();
       setPackages(packages.filter(pkg => (pkg._internalId || pkg.id) !== internalId));
       setIsDirty(true);
+      if (activeSectionKey) setDirtySections((prev) => new Set(prev).add(activeSectionKey));
     }
   };
 
@@ -695,13 +721,72 @@ function App() {
     if (idx === -1) return;
     const newIdx = direction === 'up' ? idx - 1 : idx + 1;
     if (newIdx < 0 || newIdx >= packages.length) return;
+    pushUndo();
     const copy = [...packages];
     [copy[idx], copy[newIdx]] = [copy[newIdx], copy[idx]];
     setPackages(copy);
     setIsDirty(true);
+    if (activeSectionKey) setDirtySections((prev) => new Set(prev).add(activeSectionKey));
   };
 
+  // ============================================================
+  //  Undo — snapshot-based (ingen redo)
+  // ============================================================
+  const MAX_UNDO = 50;
+
+  // Lag et snapshot av mutable editor-state. Gjøres rett FØR en endring.
+  const snapshot = () => ({
+    packages: packages.map((p) => ({ ...p })),
+    rootPrimitives: rootPrimitives ? { ...rootPrimitives } : null,
+    originalData: jsonStructure?.originalData
+      ? JSON.parse(JSON.stringify(jsonStructure.originalData))
+      : null,
+    dirtyFields: new Set(dirtyFields),
+  });
+
+  const pushUndo = () => {
+    setUndoStack((stack) => {
+      const next = [...stack, snapshot()];
+      if (next.length > MAX_UNDO) next.shift();
+      return next;
+    });
+  };
+
+  const handleUndo = () => {
+    setUndoStack((stack) => {
+      if (stack.length === 0) return stack;
+      const prev = stack[stack.length - 1];
+      setPackages(prev.packages);
+      setRootPrimitives(prev.rootPrimitives);
+      setDirtyFields(prev.dirtyFields);
+      if (prev.originalData && jsonStructure) {
+        setJsonStructure({ ...jsonStructure, originalData: prev.originalData });
+      }
+      return stack.slice(0, -1);
+    });
+    toast.success('Endring angret');
+  };
+
+  // Cmd+Z / Ctrl+Z globalt
+  useEffect(() => {
+    const handler = (e) => {
+      const cmd = e.metaKey || e.ctrlKey;
+      if (cmd && e.key === 'z' && !e.shiftKey) {
+        // Ikke trigger undo hvis man skriver i input/textarea
+        const tag = (e.target?.tagName || '').toLowerCase();
+        const isEditable = tag === 'input' || tag === 'textarea' || e.target?.isContentEditable;
+        if (isEditable) return;
+        e.preventDefault();
+        if (undoStack.length > 0) handleUndo();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [undoStack.length, packages, rootPrimitives, jsonStructure, dirtyFields]);
+
   const handleInputChange = (internalId, field, value) => {
+    pushUndo();
     setPackages(packages.map(pkg => 
       (pkg._internalId || pkg.id) === internalId ? { ...pkg, [field]: value } : pkg
     ));
@@ -732,6 +817,7 @@ function App() {
   // Inline change on an extra field (not via modal)
   const handleExtraFieldChange = (wrapperKey, fieldName, newValue) => {
     if (!jsonStructure) return;
+    pushUndo();
     const updatedOriginal = {
       ...jsonStructure.originalData,
       [wrapperKey]: {
@@ -746,6 +832,7 @@ function App() {
 
   // V3.0: endring av rot-nivå primitiv (fra RootPrimitivesPanel)
   const handleRootPrimitiveChange = (fieldName, newValue) => {
+    pushUndo();
     setRootPrimitives((prev) => ({ ...(prev || {}), [fieldName]: newValue }));
     setIsDirty(true);
     setDirtyFields((prev) => new Set(prev).add(`root__${fieldName}`));
@@ -810,7 +897,7 @@ function App() {
       URL.revokeObjectURL(url);
 
       toast.success('JSON-fil lastet ned');
-      setIsDirty(false); setDirtyFields(new Set()); setDirtySections(new Set());
+      setIsDirty(false); setDirtyFields(new Set()); setDirtySections(new Set()); setUndoStack([]);
     } catch (err) {
       toast.error('Kunne ikke eksportere: ' + err.message);
     }
@@ -829,7 +916,7 @@ function App() {
       const jsonString = JSON.stringify(exportData, null, 2);
       await navigator.clipboard.writeText(jsonString);
       toast.success('JSON kopiert til clipboard');
-      setIsDirty(false); setDirtyFields(new Set()); setDirtySections(new Set());
+      setIsDirty(false); setDirtyFields(new Set()); setDirtySections(new Set()); setUndoStack([]);
     } catch (err) {
       toast.error('Kunne ikke kopiere: ' + err.message);
     }
@@ -843,6 +930,19 @@ function App() {
       )
     : [];
 
+  // V4.0: Tell ugyldige felt på tvers av hele strukturen
+  const invalidCount = countInvalid(
+    packages,
+    rootPrimitives,
+    !sections && jsonStructure?.originalData && !Array.isArray(jsonStructure.originalData)
+      ? Object.fromEntries(
+          Object.entries(jsonStructure.originalData).filter(
+            ([k, v]) => k !== jsonStructure.mainKey && v !== null && typeof v === 'object' && !Array.isArray(v)
+          )
+        )
+      : null
+  );
+
   // Render field cell
   const renderFieldCell = (pkg, fieldName) => {
     const value = pkg[fieldName];
@@ -851,7 +951,9 @@ function App() {
     const isColorField = fieldName === 'color' || fieldName === 'farge';
     const internalId = pkg._internalId || pkg.id;
     const isEdited = dirtyFields.has(`pkg__${internalId}__${fieldName}`);
+    const validationError = validateField(fieldName, value);
     const dirtyClass = isEdited ? ' edited' : '';
+    const invalidClass = validationError ? ' invalid-field' : '';
 
     // Boolean checkbox
     if (fieldType === 'boolean') {
@@ -919,12 +1021,18 @@ function App() {
 
     // Short text or number - inline input
     return (
-      <input
-        type={fieldType === 'number' ? 'number' : 'text'}
-        value={value}
-        onChange={(e) => handleInputChange(internalId, fieldName, e.target.value)}
-        className={`table-input${dirtyClass}`}
-      />
+      <span className={`cell-with-validation${invalidClass}`}>
+        <input
+          type={fieldType === 'number' ? 'number' : 'text'}
+          value={value}
+          onChange={(e) => handleInputChange(internalId, fieldName, e.target.value)}
+          className={`table-input${dirtyClass}${invalidClass}`}
+          title={validationError ? validationError.message : undefined}
+        />
+        {validationError && (
+          <span className="invalid-marker" title={validationError.message}>⚠</span>
+        )}
+      </span>
     );
   };
 
@@ -1081,15 +1189,24 @@ function App() {
         {/* Kategori-navigering + status-pille på samme linje */}
         <div className="navigation">
           <button
-            className={`status-pill ${jsonStructure ? 'loaded' : 'mock'} ${isDirty ? 'dirty' : ''}`}
+            className={`status-pill ${jsonStructure ? 'loaded' : 'mock'} ${isDirty ? 'dirty' : ''} ${invalidCount > 0 ? 'invalid' : ''}`}
             onClick={() => setStatusModalOpen(true)}
             data-testid="open-status-btn"
-            title={isDirty ? 'Du har ulagrede endringer' : 'Klikk for detaljer'}
+            title={
+              invalidCount > 0 ? `${invalidCount} ugyldige felt`
+                : isDirty ? 'Du har ulagrede endringer'
+                : 'Klikk for detaljer'
+            }
           >
             <span className="status-dot" />
             <span className="status-text">
               {jsonStructure ? 'Data lastet' : 'Mock'}
               {isDirty && <span className="status-dirty-marker" aria-label="ulagrede endringer">●</span>}
+              {invalidCount > 0 && (
+                <span className="status-invalid-marker" title={`${invalidCount} ugyldige felt`}>
+                  ⚠ {invalidCount}
+                </span>
+              )}
             </span>
             <span className="status-meta">
               {categories.length} · {packages.length}
@@ -1125,6 +1242,16 @@ function App() {
             data-testid="next-category-btn"
           >
             Neste →
+          </button>
+
+          <button
+            onClick={handleUndo}
+            disabled={undoStack.length === 0}
+            className="nav-button"
+            data-testid="undo-btn"
+            title={undoStack.length === 0 ? 'Ingenting å angre' : `Angre (${undoStack.length} steg)`}
+          >
+            ↶ Angre
           </button>
         </div>
 
@@ -1226,11 +1353,22 @@ function App() {
         </div>
         )}
 
-        {/* Legg til pakke knapp — skjules når aktiv seksjon er primitive */}
+        {/* Legg til pakke + Legg til felt — skjules når aktiv seksjon er primitive */}
         {!(sections && activeSectionType === SECTION_TYPE.PRIMITIVE) && (
-          <button onClick={handleAddPackage} className="btn-add" data-testid="add-package-btn">
-            ➕ Legg til pakke
-          </button>
+          <div className="row-action-bar">
+            <button onClick={handleAddPackage} className="btn-add" data-testid="add-package-btn">
+              ➕ Legg til rad
+            </button>
+            <button
+              onClick={() => setAddFieldModalOpen(true)}
+              className="btn-add"
+              data-testid="add-field-btn"
+              disabled={packages.length === 0}
+              title={packages.length === 0 ? 'Legg til en rad først' : 'Legg til nytt felt i alle rader'}
+            >
+              ➕ Legg til felt
+            </button>
+          </div>
         )}
 
         {/* Eksporter-knapper */}
@@ -1260,7 +1398,7 @@ function App() {
         <span className="footer-sep">·</span>
         <span>CONSULT</span>
         <span className="footer-sep">·</span>
-        <span className="footer-version">V3.0</span>
+        <span className="footer-version">V4.0</span>
       </footer>
 
       {/* Modals */}
@@ -1307,6 +1445,13 @@ function App() {
         categories={categories}
         packages={packages}
         selectedCategoryIndex={selectedCategoryIndex}
+      />
+
+      <AddFieldModal
+        isOpen={addFieldModalOpen}
+        existingFields={fieldNames}
+        onClose={() => setAddFieldModalOpen(false)}
+        onAdd={handleAddField}
       />
     </div>
   );
