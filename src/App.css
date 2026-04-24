@@ -445,54 +445,6 @@ td:has(.table-input.edited) {
 }
 
 /* ============================================================
-   Validation highlighting (V4.0)
-   ============================================================ */
-
-.cell-with-validation {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-}
-
-.table-input.invalid-field {
-  border-color: #fca5a5;
-  background: #fef2f2;
-  box-shadow: inset 0 0 0 1px #fca5a5;
-}
-
-.table-input.invalid-field:focus {
-  border-color: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18), inset 0 0 0 1px #dc2626;
-}
-
-.invalid-marker {
-  color: #dc2626;
-  font-size: 14px;
-  cursor: help;
-  flex-shrink: 0;
-}
-
-.status-invalid-marker {
-  display: inline-flex;
-  align-items: center;
-  font-size: 10px;
-  font-weight: 700;
-  color: #b91c1c;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  padding: 1px 6px;
-  border-radius: 999px;
-  margin-left: 6px;
-  letter-spacing: 0.02em;
-}
-
-.status-pill.invalid {
-  border-color: #fca5a5;
-  background: #fef2f2;
-}
-
-/* ============================================================
    Row action bar (V4.0 — ny rad + nytt felt)
    ============================================================ */
 

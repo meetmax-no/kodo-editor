@@ -13,7 +13,6 @@ import SectionPicker from './components/SectionPicker';
 import RootPrimitivesPanel from './components/RootPrimitivesPanel';
 import AddFieldModal from './components/AddFieldModal';
 import { useConfirm } from './components/ConfirmModal';
-import { validateField, countInvalid } from './utils/fieldValidators';
 import {
   SECTION_TYPE,
   ROW_KEY_FIELD,
@@ -930,19 +929,6 @@ function App() {
       )
     : [];
 
-  // V4.0: Tell ugyldige felt på tvers av hele strukturen
-  const invalidCount = countInvalid(
-    packages,
-    rootPrimitives,
-    !sections && jsonStructure?.originalData && !Array.isArray(jsonStructure.originalData)
-      ? Object.fromEntries(
-          Object.entries(jsonStructure.originalData).filter(
-            ([k, v]) => k !== jsonStructure.mainKey && v !== null && typeof v === 'object' && !Array.isArray(v)
-          )
-        )
-      : null
-  );
-
   // Render field cell
   const renderFieldCell = (pkg, fieldName) => {
     const value = pkg[fieldName];
@@ -951,9 +937,7 @@ function App() {
     const isColorField = fieldName === 'color' || fieldName === 'farge';
     const internalId = pkg._internalId || pkg.id;
     const isEdited = dirtyFields.has(`pkg__${internalId}__${fieldName}`);
-    const validationError = validateField(fieldName, value);
     const dirtyClass = isEdited ? ' edited' : '';
-    const invalidClass = validationError ? ' invalid-field' : '';
 
     // Boolean checkbox
     if (fieldType === 'boolean') {
@@ -1021,18 +1005,12 @@ function App() {
 
     // Short text or number - inline input
     return (
-      <span className={`cell-with-validation${invalidClass}`}>
-        <input
-          type={fieldType === 'number' ? 'number' : 'text'}
-          value={value}
-          onChange={(e) => handleInputChange(internalId, fieldName, e.target.value)}
-          className={`table-input${dirtyClass}${invalidClass}`}
-          title={validationError ? validationError.message : undefined}
-        />
-        {validationError && (
-          <span className="invalid-marker" title={validationError.message}>⚠</span>
-        )}
-      </span>
+      <input
+        type={fieldType === 'number' ? 'number' : 'text'}
+        value={value}
+        onChange={(e) => handleInputChange(internalId, fieldName, e.target.value)}
+        className={`table-input${dirtyClass}`}
+      />
     );
   };
 
@@ -1189,24 +1167,15 @@ function App() {
         {/* Kategori-navigering + status-pille på samme linje */}
         <div className="navigation">
           <button
-            className={`status-pill ${jsonStructure ? 'loaded' : 'mock'} ${isDirty ? 'dirty' : ''} ${invalidCount > 0 ? 'invalid' : ''}`}
+            className={`status-pill ${jsonStructure ? 'loaded' : 'mock'} ${isDirty ? 'dirty' : ''}`}
             onClick={() => setStatusModalOpen(true)}
             data-testid="open-status-btn"
-            title={
-              invalidCount > 0 ? `${invalidCount} ugyldige felt`
-                : isDirty ? 'Du har ulagrede endringer'
-                : 'Klikk for detaljer'
-            }
+            title={isDirty ? 'Du har ulagrede endringer' : 'Klikk for detaljer'}
           >
             <span className="status-dot" />
             <span className="status-text">
               {jsonStructure ? 'Data lastet' : 'Mock'}
               {isDirty && <span className="status-dirty-marker" aria-label="ulagrede endringer">●</span>}
-              {invalidCount > 0 && (
-                <span className="status-invalid-marker" title={`${invalidCount} ugyldige felt`}>
-                  ⚠ {invalidCount}
-                </span>
-              )}
             </span>
             <span className="status-meta">
               {categories.length} · {packages.length}
