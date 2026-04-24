@@ -67,55 +67,40 @@ V2.0 shipped 2026-04-21 with live JSON preview, row reordering, extra-fields pan
 
 ---
 
-## V3.0 — Complex JSON structures (P0 — MUST fix)
+## V3.0 Close-out 🎉
+V3.0 shipped 2026-04-24. Complex JSON structures now fully supported via auto-detected section picker. Calender/config.json renders all 6 sections cleanly. Regression on priser.json, url.json, and tjenester.json still works.
+
+---
+
+## V3.0 — Complex JSON structures (DONE ✅)
 
 ### Problem
-Editor was built assuming **one primary array** + optional wrapper objects. Real-world config files have richer structures that break the assumption.
+Editor was built assuming **one primary array** + optional wrapper objects. Real-world config files have richer structures that broke the assumption.
 
-### Reproducing case
-`https://raw.githubusercontent.com/meetmax-no/Calender/refs/heads/main/public/config.json` exposes 3 concrete limitations:
+### Solution delivered
+- **`detectSections()`** utility classifies each top-level key as `array-of-objects`, `dict-of-objects`, `dict-of-primitives`, `primitive`, or `nested-categories`.
+- **`<SectionPicker>`** tabs auto-appear when ≥2 editable sections or when dict-of-objects / root-primitives exist. Each tab shows type-icon, name, count badge, and a dirty marker (●) for unsaved changes.
+- **`<RootPrimitivesPanel>`** renders root-level scalars (`version`, `updatedAt`) in a small header panel with same dirty-highlighting as the rest.
+- **Dict transformation** — `dict-of-objects` and `dict-of-primitives` are mapped to synthetic rows with a `__key` column (shown as "Nøkkel" in UI). Edits are transformed back to dicts on export/persist.
+- **Pragmatic flow** — user edits one section at a time, switches tab (auto-persists current), edits next, then exports. Loading twice is fine.
+- **Backwards compatible** — single-section and nested-category flows (priser.json, tjenester.json, url.json) are untouched; SectionPicker doesn't appear for them.
 
-1. **Dictionary with object values** — `taskTypes.TRACK1 = {label, icon, color, ...}` renders as `[object Object]` in an unusable input.
-2. **Multiple top-level arrays** — editor picks the first (`palette`) and silently hides the rest (`backgrounds` array of 9 items is invisible).
-3. **Root-level primitives** — `version` and `updatedAt` (strings on root) are preserved on export but can't be edited.
+### Acceptance criteria — ALL MET
+- [x] Calender/config.json laster inn og viser seksjonsvelger med 6 seksjoner
+- [x] `taskTypes.TRACK1` er redigerbar (ikke `[object Object]`)
+- [x] `backgrounds` er redigerbar
+- [x] `version` og `updatedAt` kan redigeres via header-panel
+- [x] Round-trip: last inn → rediger én seksjon → eksporter → alle andre seksjoner uendret
+- [x] Gamle flat- og nested-filer (priser.json, tjenester.json) fungerer fortsatt uendret
+- [x] `holidays` og `commercialDays` fungerer som før
 
-### Chosen approach: A — Section picker
-Agreed direction (user + agent): add a "section picker" that detects multi-section configs and lets the user pick one section at a time to edit. Accepted trade-off: editing two sections means loading the file twice. Pragmatic over fancy.
+### New files
+- `/app/src/utils/sectionDetector.js`
+- `/app/src/components/SectionPicker.{js,css}`
+- `/app/src/components/RootPrimitivesPanel.{js,css}`
 
-### Implementation plan
-
-**Detection phase** — after load, classify each top-level key into one of:
-| Type | Example | Rendering mode |
-|---|---|---|
-| `array-of-objects` | `palette`, `backgrounds` | Dagens tabell (eksisterer) |
-| `dict-of-objects` | `taskTypes` | Tabell med key-kolonne + objektfelter (ny mode) |
-| `dict-of-primitives` | `holidays`, `commercialDays` | Key/value-tabell (nesten eksisterer) |
-| `primitive` | `version`, `updatedAt` | Header-inputs øverst (ny mode) |
-
-**UI changes**
-- If file has ≥2 editable sections → show section picker dropdown/tabs above the category navigator
-- Each section type renders with its own tailored view
-- Export always rebuilds the complete original structure; unedited sections pass through untouched
-- Dirty-state tracking per section (kan vise 🟡-prikk per seksjon)
-
-**Affected files / estimated effort**
-- `/app/src/App.js` — detection + routing (~10 min)
-- `/app/src/components/SectionPicker.{js,css}` — NY (~10 min)
-- `/app/src/components/DictObjectsTable.{js,css}` — NY for `dict-of-objects` (~15 min)
-- `/app/src/components/RootPrimitivesPanel.{js,css}` — NY for root scalar fields (~5 min)
-- Testing mot config.json + regresjon på priser.json (~10 min)
-
-**Total estimate:** ~45-60 min fokusert arbeid i én økt.
-_(Original estimat på 6-8 timer gjaldt manuell koding fra bunnen. Med eksisterende mønstre fra ExtraFieldsPanel, StatusModal, JsonPreviewPanel m.fl. å gjenbruke går det mye raskere.)_
-
-### Acceptance criteria
-- [ ] Calender/config.json laster inn og viser seksjonsvelger med 6 seksjoner
-- [ ] `taskTypes.TRACK1` er redigerbar (ikke `[object Object]`)
-- [ ] `backgrounds` er redigerbar
-- [ ] `version` og `updatedAt` kan redigeres via header-panel
-- [ ] Round-trip: last inn → rediger én seksjon → eksporter → alle andre seksjoner uendret
-- [ ] Gamle flat- og nested-filer (priser.json, tjenester.json) fungerer fortsatt uendret
-- [ ] `holidays` og `commercialDays` fungerer som før
+### Actual time spent
+~60 min from start to finished testing — as predicted. 🎯
 
 ---
 

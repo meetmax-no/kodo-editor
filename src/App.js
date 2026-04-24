@@ -9,7 +9,18 @@ import NewJsonModal from './components/NewJsonModal';
 import StatusModal from './components/StatusModal';
 import ExtraFieldsPanel from './components/ExtraFieldsPanel';
 import JsonPreviewPanel from './components/JsonPreviewPanel';
+import SectionPicker from './components/SectionPicker';
+import RootPrimitivesPanel from './components/RootPrimitivesPanel';
 import { useConfirm } from './components/ConfirmModal';
+import {
+  SECTION_TYPE,
+  ROW_KEY_FIELD,
+  detectSections,
+  dictObjectsToRows,
+  rowsToDictObjects,
+  dictPrimitivesToRows,
+  rowsToDictPrimitives,
+} from './utils/sectionDetector';
 
 // Litt moro: en samling undertitler som roteres tilfeldig ved hver side-lasting
 const SUBTITLES = [
@@ -74,6 +85,12 @@ function App() {
   const [isDirty, setIsDirty] = useState(false);
   const [dirtyFields, setDirtyFields] = useState(new Set());
   const [previewOpen, setPreviewOpen] = useState(false);
+  // V3.0 — multi-section state
+  const [sections, setSections] = useState(null); // null = single-section mode
+  const [activeSectionKey, setActiveSectionKey] = useState(null);
+  const [activeSectionType, setActiveSectionType] = useState(null);
+  const [rootPrimitives, setRootPrimitives] = useState(null); // { key: value } when root-primitives seksjon er valgt
+  const [dirtySections, setDirtySections] = useState(new Set());
   // Velg en tilfeldig undertittel ved mount (ikke re-generer ved hver render)
   const [subtitle] = useState(() => randomSubtitle());
   const [editingField, setEditingField] = useState({ source: 'package', packageId: null, fieldName: null, value: null, wrapperKey: null });
@@ -108,6 +125,12 @@ function App() {
   // Returns an updated jsonStructure clone that callers can use immediately.
   const persistCurrentPackages = () => {
     if (!jsonStructure) return null;
+
+    // Multi-section mode: dispatch by section type
+    if (sections && activeSectionKey) {
+      return persistCurrentSection();
+    }
+
     const cleanedPackages = packages.map((pkg) => {
       const { _internalId, ...rest } = pkg;
       return rest;
@@ -139,9 +162,122 @@ function App() {
     }
   };
 
+  // Multi-section: persist current active section back into originalData.
+  // Håndterer array-of-objects / dict-of-objects / dict-of-primitives / primitive.
+  const persistCurrentSection = () => {
+    if (!jsonStructure || !activeSectionKey) return jsonStructure;
+    const original = jsonStructure.originalData || {};
+    let updatedOriginal = { ...original };
+
+    if (activeSectionType === SECTION_TYPE.PRIMITIVE) {
+      // Merge rootPrimitives tilbake direkte på roten
+      if (rootPrimitives) {
+        updatedOriginal = { ...updatedOriginal, ...rootPrimitives };
+      }
+    } else {
+      const cleanedPackages = packages.map((pkg) => {
+        const { _internalId, ...rest } = pkg;
+        return rest;
+      });
+
+      if (activeSectionType === SECTION_TYPE.ARRAY_OF_OBJECTS) {
+        updatedOriginal[activeSectionKey] = cleanedPackages;
+      } else if (activeSectionType === SECTION_TYPE.DICT_OF_OBJECTS) {
+        updatedOriginal[activeSectionKey] = rowsToDictObjects(cleanedPackages);
+      } else if (activeSectionType === SECTION_TYPE.DICT_OF_PRIMITIVES) {
+        updatedOriginal[activeSectionKey] = rowsToDictPrimitives(cleanedPackages);
+      }
+    }
+
+    const next = { ...jsonStructure, originalData: updatedOriginal };
+    setJsonStructure(next);
+    return next;
+  };
+
+  // Switch to a different section: persist current, then load new
+  const switchToSection = (sectionKey) => {
+    if (sectionKey === activeSectionKey) return;
+    const persisted = persistCurrentSection();
+    loadSectionFromOriginal(persisted, sectionKey);
+  };
+
+  // Load a section's data from originalData into the editor state
+  const loadSectionFromOriginal = (structure, sectionKey) => {
+    if (!structure || !sections) return;
+    const section = sections.find((s) => s.key === sectionKey);
+    if (!section) return;
+
+    setActiveSectionKey(sectionKey);
+    setActiveSectionType(section.type);
+    setDirtyFields(new Set()); // local field-dirty tracker resets per seksjon
+
+    const original = structure.originalData || {};
+
+    if (section.type === SECTION_TYPE.PRIMITIVE) {
+      const primData = {};
+      for (const f of section.fields || []) primData[f] = original[f];
+      setRootPrimitives(primData);
+      setPackages([]);
+      setCategories(['Rot']);
+      setSelectedCategoryIndex(0);
+      return;
+    }
+
+    setRootPrimitives(null);
+    const raw = original[sectionKey];
+    let rows = [];
+
+    if (section.type === SECTION_TYPE.ARRAY_OF_OBJECTS) {
+      rows = (raw || []).map((item, idx) => ({
+        _internalId: `sec_${sectionKey}_${idx}_${Date.now()}`,
+        ...item,
+      }));
+    } else if (section.type === SECTION_TYPE.DICT_OF_OBJECTS) {
+      rows = dictObjectsToRows(raw || {}).map((item, idx) => ({
+        _internalId: `sec_${sectionKey}_${idx}_${Date.now()}`,
+        ...item,
+      }));
+    } else if (section.type === SECTION_TYPE.DICT_OF_PRIMITIVES) {
+      rows = dictPrimitivesToRows(raw || {}).map((item, idx) => ({
+        _internalId: `sec_${sectionKey}_${idx}_${Date.now()}`,
+        ...item,
+      }));
+    }
+
+    setPackages(rows);
+    setCategories([sectionKey]);
+    setSelectedCategoryIndex(0);
+  };
+
   // Beregn live JSON (uten å mutere state) — brukes av preview-panelet.
   const computeLiveJson = () => {
     if (!jsonStructure) return null;
+
+    // Multi-section: merge active section inn i originalData
+    if (sections && activeSectionKey) {
+      const original = jsonStructure.originalData || {};
+      const merged = { ...original };
+
+      if (activeSectionType === SECTION_TYPE.PRIMITIVE) {
+        if (rootPrimitives) Object.assign(merged, rootPrimitives);
+        return merged;
+      }
+
+      const cleanedPackages = packages.map((pkg) => {
+        const { _internalId, ...rest } = pkg;
+        return rest;
+      });
+
+      if (activeSectionType === SECTION_TYPE.ARRAY_OF_OBJECTS) {
+        merged[activeSectionKey] = cleanedPackages;
+      } else if (activeSectionType === SECTION_TYPE.DICT_OF_OBJECTS) {
+        merged[activeSectionKey] = rowsToDictObjects(cleanedPackages);
+      } else if (activeSectionType === SECTION_TYPE.DICT_OF_PRIMITIVES) {
+        merged[activeSectionKey] = rowsToDictPrimitives(cleanedPackages);
+      }
+      return merged;
+    }
+
     const cleanedPackages = packages.map((pkg) => {
       const { _internalId, ...rest } = pkg;
       return rest;
@@ -267,6 +403,128 @@ function App() {
     });
   };
 
+  // Shared: initialize editor from a parsed JSON value (both URL and File paths).
+  // Returnerer ingenting; oppdaterer state. Kastes hvis JSON er ubrukelig.
+  const initializeFromData = (data, sourceTag) => {
+    // V3.0: prøv først å detektere flere seksjoner
+    const detected = detectSections(data);
+
+    if (detected && detected.length > 0) {
+      // Multi-section mode: lagre seksjoner, aktiver første
+      // Beregn telling per seksjon for SectionPicker badge
+      const annotated = detected.map((s) => {
+        let count;
+        if (s.type === SECTION_TYPE.PRIMITIVE) count = (s.fields || []).length;
+        else {
+          const raw = data[s.key];
+          if (Array.isArray(raw)) count = raw.length;
+          else if (raw && typeof raw === 'object') count = Object.keys(raw).length;
+        }
+        return { ...s, count };
+      });
+
+      setSections(annotated);
+      setJsonStructure({ originalData: data, mainKey: annotated[0].key, hasCategories: false });
+      setError(null);
+
+      // Last første seksjon (midlertidig — annotated blir kilden via argument)
+      loadSectionInto(data, annotated, annotated[0].key);
+      return;
+    }
+
+    // Single-section mode (som før)
+    setSections(null);
+    setActiveSectionKey(null);
+    setActiveSectionType(null);
+    setRootPrimitives(null);
+
+    let mainArray = null;
+    let mainKey = null;
+    if (Array.isArray(data)) {
+      mainArray = data;
+      mainKey = 'items';
+    } else {
+      for (const key of Object.keys(data)) {
+        if (Array.isArray(data[key])) { mainArray = data[key]; mainKey = key; break; }
+      }
+    }
+    if (!mainArray) throw new Error('Fant ingen array i JSON-filen. Sjekk strukturen.');
+
+    if (
+      mainArray.length > 0 &&
+      mainArray[0].kategori &&
+      (mainArray[0].pakker || mainArray[0].tjenester)
+    ) {
+      const categoryNames = mainArray.map((cat) => cat.kategori);
+      const itemsKey = mainArray[0].pakker ? 'pakker' : 'tjenester';
+      const firstCategoryPackages = (mainArray[0][itemsKey] || []).map((item, idx) => ({
+        _internalId: `${sourceTag}_${Date.now()}_${idx}`,
+        ...item,
+      }));
+      setCategories(categoryNames);
+      setPackages(firstCategoryPackages);
+      setJsonStructure({
+        hasCategories: true,
+        data: mainArray,
+        originalData: data,
+        mainKey,
+        itemsKey,
+      });
+    } else {
+      const itemsWithIds = mainArray.map((item, idx) => ({
+        _internalId: `${sourceTag}_${Date.now()}_${idx}`,
+        ...item,
+      }));
+      setCategories(['Alle']);
+      setPackages(itemsWithIds);
+      setJsonStructure({ hasCategories: false, data: mainArray, originalData: data, mainKey });
+    }
+    setSelectedCategoryIndex(0);
+  };
+
+  // Hjelper brukt under første lasting når "sections" state ikke er oppdatert ennå.
+  const loadSectionInto = (data, sectionList, sectionKey) => {
+    const section = sectionList.find((s) => s.key === sectionKey);
+    if (!section) return;
+
+    setActiveSectionKey(sectionKey);
+    setActiveSectionType(section.type);
+    setDirtyFields(new Set());
+
+    if (section.type === SECTION_TYPE.PRIMITIVE) {
+      const primData = {};
+      for (const f of section.fields || []) primData[f] = data[f];
+      setRootPrimitives(primData);
+      setPackages([]);
+      setCategories(['Rot']);
+      setSelectedCategoryIndex(0);
+      return;
+    }
+
+    setRootPrimitives(null);
+    const raw = data[sectionKey];
+    let rows = [];
+    if (section.type === SECTION_TYPE.ARRAY_OF_OBJECTS) {
+      rows = (raw || []).map((item, idx) => ({
+        _internalId: `sec_${sectionKey}_${idx}_${Date.now()}`,
+        ...item,
+      }));
+    } else if (section.type === SECTION_TYPE.DICT_OF_OBJECTS) {
+      rows = dictObjectsToRows(raw || {}).map((item, idx) => ({
+        _internalId: `sec_${sectionKey}_${idx}_${Date.now()}`,
+        ...item,
+      }));
+    } else if (section.type === SECTION_TYPE.DICT_OF_PRIMITIVES) {
+      rows = dictPrimitivesToRows(raw || {}).map((item, idx) => ({
+        _internalId: `sec_${sectionKey}_${idx}_${Date.now()}`,
+        ...item,
+      }));
+    }
+    setPackages(rows);
+    setCategories([sectionKey]);
+    setSelectedCategoryIndex(0);
+  };
+
   const handleLoadJSON = async () => {
     const url = selectedPreset === presetUrls.length - 1 
       ? customUrl 
@@ -283,80 +541,13 @@ function App() {
     setError(null);
 
     try {
-      // Cache-bust for URL-er også (spesielt raw.githubusercontent.com har CDN-cache)
       const cacheBustedUrl = url.includes('?') ? `${url}&_=${Date.now()}` : `${url}?_=${Date.now()}`;
       const response = await fetch(cacheBustedUrl, { cache: 'no-store' });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
-      
-      // Handle different JSON structures
-      let mainArray = null;
-      let mainKey = null;
-      
-      // Check if root is already an array
-      if (Array.isArray(data)) {
-        mainArray = data;
-        mainKey = 'items';
-      } else {
-        // Find the first array in the object
-        for (const key of Object.keys(data)) {
-          if (Array.isArray(data[key])) {
-            mainArray = data[key];
-            mainKey = key;
-            break;
-          }
-        }
-      }
-
-      if (!mainArray) {
-        throw new Error('Fant ingen array i JSON-filen. Sjekk strukturen.');
-      }
-
-
-      // Check if nested structure (like priser.json with categories)
-      if (mainArray.length > 0 && mainArray[0].kategori && (mainArray[0].pakker || mainArray[0].tjenester)) {
-        // Nested structure with categories
-        const categoryNames = mainArray.map(cat => cat.kategori);
-        const itemsKey = mainArray[0].pakker ? 'pakker' : 'tjenester';
-        const firstCategoryPackages = (mainArray[0][itemsKey] || []).map((item, idx) => ({
-          _internalId: `loaded_${Date.now()}_${idx}`,
-          ...item
-        }));
-        
-        setCategories(categoryNames);
-        setPackages(firstCategoryPackages);
-        setJsonStructure({ 
-          hasCategories: true, 
-          data: mainArray,
-          originalData: data,  // Store WHOLE JSON including studenttilbud etc.
-          mainKey: mainKey,
-          itemsKey: itemsKey
-        });
-        setSelectedCategoryIndex(0);
-      } else {
-        // Flat structure (like tjenester.json or medisin.json)
-        const itemsWithIds = mainArray.map((item, idx) => ({
-          _internalId: `loaded_${Date.now()}_${idx}`,
-          ...item
-        }));
-        
-        
-        setCategories(['Alle']);
-        setPackages(itemsWithIds);
-        setJsonStructure({ 
-          hasCategories: false, 
-          data: mainArray,
-          originalData: data,  // Store WHOLE JSON
-          mainKey: mainKey
-        });
-        setSelectedCategoryIndex(0);
-      }
-
+      initializeFromData(data, 'loaded');
       setLoading(false);
-      setIsDirty(false); setDirtyFields(new Set());
+      setIsDirty(false); setDirtyFields(new Set()); setDirtySections(new Set());
     } catch (err) {
       setError(`Kunne ikke laste JSON: ${err.message}`);
       setLoading(false);
@@ -380,73 +571,11 @@ function App() {
     reader.onload = (e) => {
       try {
         let text = e.target.result;
-        
-        // Remove UTF-8 BOM if present
-        if (text.charCodeAt(0) === 0xFEFF) {
-          text = text.slice(1);
-        }
-        
+        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
         const data = JSON.parse(text);
-        
-        // Handle different JSON structures
-        let mainArray = null;
-        let mainKey = null;
-        
-        // Check if root is already an array
-        if (Array.isArray(data)) {
-          mainArray = data;
-          mainKey = 'items';
-        } else {
-          // Find the first array in the object
-          for (const key of Object.keys(data)) {
-            if (Array.isArray(data[key])) {
-              mainArray = data[key];
-              mainKey = key;
-              break;
-            }
-          }
-        }
-
-        if (!mainArray) {
-          throw new Error('Fant ingen array i JSON-filen. Sjekk strukturen.');
-        }
-
-        if (mainArray.length > 0 && mainArray[0].kategori && (mainArray[0].pakker || mainArray[0].tjenester)) {
-          const categoryNames = mainArray.map(cat => cat.kategori);
-          const itemsKey = mainArray[0].pakker ? 'pakker' : 'tjenester';
-          const firstCategoryPackages = (mainArray[0][itemsKey] || []).map((item, idx) => ({
-            _internalId: `file_${Date.now()}_${idx}`,
-            ...item
-          }));
-          
-          setCategories(categoryNames);
-          setPackages(firstCategoryPackages);
-          setJsonStructure({ 
-            hasCategories: true, 
-            data: mainArray,
-            originalData: data,  // Store WHOLE JSON
-            mainKey: mainKey,
-            itemsKey: itemsKey
-          });
-        } else {
-          const itemsWithIds = mainArray.map((item, idx) => ({
-            _internalId: `file_${Date.now()}_${idx}`,
-            ...item
-          }));
-          
-          setCategories(['Alle']);
-          setPackages(itemsWithIds);
-          setJsonStructure({ 
-            hasCategories: false, 
-            data: mainArray,
-            originalData: data,  // Store WHOLE JSON
-            mainKey: mainKey
-          });
-        }
-
-        setSelectedCategoryIndex(0);
+        initializeFromData(data, 'file');
         setLoading(false);
-        setIsDirty(false); setDirtyFields(new Set());
+        setIsDirty(false); setDirtyFields(new Set()); setDirtySections(new Set());
       } catch (err) {
         setError(`Kunne ikke lese fil: ${err.message}`);
         setLoading(false);
@@ -502,6 +631,12 @@ function App() {
 
   // Create a new JSON from scratch via NewJsonModal
   const handleCreateNewJson = ({ structure, data, mainKey, itemsKey, categoryLabelKey }) => {
+    // V3.0: Brukeren starter alltid i single-section mode ved NyJSON
+    setSections(null);
+    setActiveSectionKey(null);
+    setActiveSectionType(null);
+    setRootPrimitives(null);
+
     if (structure === 'flat') {
       const mainArray = data[mainKey];
       const itemsWithIds = mainArray.map((item, idx) => ({
@@ -538,7 +673,7 @@ function App() {
     }
     setError(null);
     setNewJsonModalOpen(false);
-    setIsDirty(false); setDirtyFields(new Set());
+    setIsDirty(false); setDirtyFields(new Set()); setDirtySections(new Set());
   };
 
   const handleDeletePackage = async (internalId) => {
@@ -572,6 +707,9 @@ function App() {
     ));
     setIsDirty(true);
     setDirtyFields((prev) => new Set(prev).add(`pkg__${internalId}__${field}`));
+    if (activeSectionKey) {
+      setDirtySections((prev) => new Set(prev).add(activeSectionKey));
+    }
   };
 
   // Open appropriate modal based on field type
@@ -604,6 +742,16 @@ function App() {
     setJsonStructure({ ...jsonStructure, originalData: updatedOriginal });
     setIsDirty(true);
     setDirtyFields((prev) => new Set(prev).add(`extra__${wrapperKey}__${fieldName}`));
+  };
+
+  // V3.0: endring av rot-nivå primitiv (fra RootPrimitivesPanel)
+  const handleRootPrimitiveChange = (fieldName, newValue) => {
+    setRootPrimitives((prev) => ({ ...(prev || {}), [fieldName]: newValue }));
+    setIsDirty(true);
+    setDirtyFields((prev) => new Set(prev).add(`root__${fieldName}`));
+    if (activeSectionKey) {
+      setDirtySections((prev) => new Set(prev).add(activeSectionKey));
+    }
   };
 
   // Open modal for an extra field (longtext / array / color / icon)
@@ -662,7 +810,7 @@ function App() {
       URL.revokeObjectURL(url);
 
       toast.success('JSON-fil lastet ned');
-      setIsDirty(false); setDirtyFields(new Set());
+      setIsDirty(false); setDirtyFields(new Set()); setDirtySections(new Set());
     } catch (err) {
       toast.error('Kunne ikke eksportere: ' + err.message);
     }
@@ -681,15 +829,18 @@ function App() {
       const jsonString = JSON.stringify(exportData, null, 2);
       await navigator.clipboard.writeText(jsonString);
       toast.success('JSON kopiert til clipboard');
-      setIsDirty(false); setDirtyFields(new Set());
+      setIsDirty(false); setDirtyFields(new Set()); setDirtySections(new Set());
     } catch (err) {
       toast.error('Kunne ikke kopiere: ' + err.message);
     }
   };
 
-  // Get all field names from first package (exclude internal fields starting with _)
-  const fieldNames = packages.length > 0 
-    ? Object.keys(packages[0]).filter(key => !key.startsWith('_'))
+  // Get all field names from first package (exclude internal fields like _internalId,
+  // but keep __key which is a user-visible dict-key column).
+  const fieldNames = packages.length > 0
+    ? Object.keys(packages[0]).filter(
+        (key) => key === ROW_KEY_FIELD || !key.startsWith('_')
+      )
     : [];
 
   // Render field cell
@@ -917,6 +1068,16 @@ function App() {
           </div>
         )}
 
+        {/* V3.0: SectionPicker — vises kun i multi-section mode */}
+        {sections && (
+          <SectionPicker
+            sections={sections}
+            activeKey={activeSectionKey}
+            onSelect={switchToSection}
+            dirtySections={dirtySections}
+          />
+        )}
+
         {/* Kategori-navigering + status-pille på samme linje */}
         <div className="navigation">
           <button
@@ -967,8 +1128,8 @@ function App() {
           </button>
         </div>
 
-        {/* Ekstra felter — rot-objekter ved siden av hoved-arrayet */}
-        {jsonStructure?.originalData && !Array.isArray(jsonStructure.originalData) && (() => {
+        {/* Ekstra felter — rot-objekter ved siden av hoved-arrayet (kun i single-section mode) */}
+        {!sections && jsonStructure?.originalData && !Array.isArray(jsonStructure.originalData) && (() => {
           const extras = Object.entries(jsonStructure.originalData).filter(
             ([k, v]) => k !== jsonStructure.mainKey && v !== null && typeof v === 'object' && !Array.isArray(v)
           );
@@ -984,7 +1145,17 @@ function App() {
           );
         })()}
 
-        {/* Pakker-tabell */}
+        {/* V3.0: RootPrimitivesPanel når aktiv seksjon er primitive */}
+        {sections && activeSectionType === SECTION_TYPE.PRIMITIVE && rootPrimitives && (
+          <RootPrimitivesPanel
+            data={rootPrimitives}
+            dirtyFields={dirtyFields}
+            onChange={handleRootPrimitiveChange}
+          />
+        )}
+
+        {/* Pakker-tabell — skjules når aktiv seksjon er primitive */}
+        {!(sections && activeSectionType === SECTION_TYPE.PRIMITIVE) && (
         <div className="table-section">
           <h2 className="section-title">
             {jsonStructure?.hasCategories ? 'Pakker' : 'Items'} i "{categories[selectedCategoryIndex]}"
@@ -996,7 +1167,9 @@ function App() {
                 <tr>
                   {fieldNames.map(fieldName => (
                     <th key={fieldName}>
-                      {fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      {fieldName === ROW_KEY_FIELD
+                        ? 'Nøkkel'
+                        : fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </th>
                   ))}
                   <th style={{ width: '140px' }}>Aksjon</th>
@@ -1051,11 +1224,14 @@ function App() {
             </table>
           </div>
         </div>
+        )}
 
-        {/* Legg til pakke knapp */}
-        <button onClick={handleAddPackage} className="btn-add" data-testid="add-package-btn">
-          ➕ Legg til pakke
-        </button>
+        {/* Legg til pakke knapp — skjules når aktiv seksjon er primitive */}
+        {!(sections && activeSectionType === SECTION_TYPE.PRIMITIVE) && (
+          <button onClick={handleAddPackage} className="btn-add" data-testid="add-package-btn">
+            ➕ Legg til pakke
+          </button>
+        )}
 
         {/* Eksporter-knapper */}
         <div className="export-section">
@@ -1084,7 +1260,7 @@ function App() {
         <span className="footer-sep">·</span>
         <span>CONSULT</span>
         <span className="footer-sep">·</span>
-        <span className="footer-version">V2.0</span>
+        <span className="footer-version">V3.0</span>
       </footer>
 
       {/* Modals */}

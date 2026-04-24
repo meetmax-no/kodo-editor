@@ -1,0 +1,69 @@
+/* RootPrimitivesPanel */
+
+.rpp-wrapper {
+  margin: 0 0 24px;
+  padding: 18px 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.rpp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.rpp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rpp-label {
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.rpp-input {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #0f172a;
+  background: #ffffff;
+  font-family: inherit;
+  transition: all 120ms ease;
+}
+
+.rpp-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+.rpp-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #4f46e5;
+  cursor: pointer;
+}
+
+.rpp-input.edited {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  box-shadow: inset 0 0 0 1px #fcd34d;
+}
+
+.rpp-input.edited:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18), inset 0 0 0 1px #f59e0b;
+}
+
+.rpp-checkbox.edited {
+  outline: 2px solid #fcd34d;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
