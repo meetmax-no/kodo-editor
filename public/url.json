@@ -17,11 +17,11 @@
   },
   {
     "name": "ToDo Planner - Me & Max",
-    "url": "https://raw.githubusercontent.com/meetmax-no/Calender/refs/heads/main/public/config.json"
+    "url": "https://raw.githubusercontent.com/meetmax-no/Calender/refs/heads/main/public/clients/meetmax.json"
   },
   {
-    "name": "ToDo Planner - _Default",
-    "url": ""
+    "name": "ToDo Planner - Default",
+    "url": "https://raw.githubusercontent.com/meetmax-no/Calender/refs/heads/main/public/clients/default.json"
   },
   {
     "name": "JSON Editor - Default list",
