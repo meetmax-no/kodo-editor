@@ -26,7 +26,6 @@ export default function PasswordAdminPanel() {
       </p>
 
       <HashGenerator />
-      <HashTester />
       <JwtSecretGenerator />
     </section>
   );
@@ -138,10 +137,6 @@ function HashGenerator() {
           <div className="pwd-warning" data-testid="hashgen-warning">
             ⚠️ Lukk dette vinduet når du er ferdig. Hashen ligger ikke noe annet sted.
           </div>
-          <div className="pwd-tip" data-testid="hashgen-tip">
-            💡 <strong>Tips</strong>: Verifiser hashen med <em>Test eksisterende hash</em> nedenfor
-            før du limer den inn i Vercel — da unngår du nattlige 500-meldinger.
-          </div>
           <ol className="pwd-steps">
             <li>Åpne Vercel Dashboard → Project → Settings → Environment Variables</li>
             <li>Erstatt verdien for <code>AUTH_PASSWORD_HASH</code> med hashen over.
@@ -152,89 +147,9 @@ function HashGenerator() {
           </ol>
           <div className="pwd-note">
             <strong>NB:</strong> Når du har limt hashen inn i Vercel og lagret, kan du
-            ikke lese den ut igjen som klartekst — Vercel viser kun "•••••••". Hvis du må verifisere
-            senere: generer på nytt fra passordet og sammenlign her.
+            ikke lese den ut igjen — verdien er <code>Sensitive</code>. Mistet passord =
+            generer ny hash fra nytt passord og redeploy.
           </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function HashTester() {
-  const [testHash, setTestHash] = useState('');
-  const [testPwd, setTestPwd] = useState('');
-  const [showPw, setShowPw] = useState(false);
-  const [result, setResult] = useState(null); // null | 'match' | 'nomatch' | 'error'
-  const [working, setWorking] = useState(false);
-
-  const handleTest = async () => {
-    setResult(null);
-    if (!testHash || !testPwd) {
-      setResult('error');
-      return;
-    }
-    setWorking(true);
-    try {
-      const ok = await bcrypt.compare(testPwd, testHash.trim());
-      setResult(ok ? 'match' : 'nomatch');
-    } catch {
-      setResult('error');
-    } finally {
-      setWorking(false);
-    }
-  };
-
-  return (
-    <div className="pwd-block" data-testid="hash-tester" style={{ marginTop: 18 }}>
-      <h4 className="pwd-subtitle">🧪 Test eksisterende hash</h4>
-      <p className="pwd-hint">
-        Lim inn en hash + et passord for å verifisere at de matcher.
-      </p>
-
-      <label className="pwd-label">Hash</label>
-      <textarea
-        className="pwd-input pwd-input-mono"
-        value={testHash}
-        onChange={(e) => setTestHash(e.target.value)}
-        placeholder="$2b$12$..."
-        rows={2}
-        data-testid="hashtest-hash-input"
-        autoComplete="off"
-      />
-
-      <PasswordField
-        label="Passord å teste"
-        value={testPwd}
-        onChange={setTestPwd}
-        show={showPw}
-        onToggle={() => setShowPw((v) => !v)}
-        testId="hashtest-password-input"
-      />
-
-      <button
-        type="button"
-        className="pwd-btn pwd-btn-primary"
-        onClick={handleTest}
-        disabled={working || !testHash || !testPwd}
-        data-testid="hashtest-run-btn"
-      >
-        {working ? 'Tester…' : 'Test match'}
-      </button>
-
-      {result === 'match' && (
-        <div className="pwd-result-match" data-testid="hashtest-result-match">
-          ✅ Match — passordet matcher hashen
-        </div>
-      )}
-      {result === 'nomatch' && (
-        <div className="pwd-result-nomatch" data-testid="hashtest-result-nomatch">
-          ❌ Ingen match — passordet matcher ikke hashen
-        </div>
-      )}
-      {result === 'error' && (
-        <div className="pwd-error" data-testid="hashtest-result-error">
-          Hash er ugyldig eller mangler felt
         </div>
       )}
     </div>

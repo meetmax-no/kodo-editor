@@ -176,6 +176,7 @@ Se `/app/frontend/DEPLOYMENT.md` for komplett Vercel-setup (Root Directory=`fron
 - ✅ Login bakgrunn arver app-bakgrunn via AuthGate-`useBackground(null)` — ikke lenger hardkodet svart
 - ✅ Login-kortet bruker `var(--glass-strong)` / `backdrop-filter: blur(20px) saturate(140%)` — samme glass-stil som resten av appen
 - ✅ Innebygd JWT-secret-generator (crypto.getRandomValues, 32/48/64 bytes)
-- ✅ Tydeligere workflow i Settings: tips om å teste hash FØR Vercel + note om at Vercel maskerer ENV etter save
-- ✅ **Fikset Vercel deploy-error**: `jose v6` er ESM-only og kunne ikke `require()`-es. Konvertert hele `/api/`-mappa til ESM (`api/package.json: {"type":"module"}`, `import/export` syntax).
+- ✅ **Fikset Vercel deploy-error**: `jose v6` er ESM-only og kunne ikke `require()`-es. Konvertert hele `/api/`-mappa til ESM (`api/package.json: {"type":"module"}`, `import/export` syntax). Min implementasjons-feil, ikke deploy-konfig.
+- ✅ **Fjernet hash-tester**: Vercel ENV-vars markert "Sensitive" (default + best practice) er ikke lesbare etter save → ingen måte å sammenligne mot stored hash → testeren hadde ingen reell nytteverdi. Hash genereres deterministisk fra passord, så testen var redundant.
+
 
