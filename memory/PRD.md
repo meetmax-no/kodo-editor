@@ -14,36 +14,42 @@ Pulle https://github.com/meetmax-no/kodo-editor og les dokumentasjonen. CRA-app 
 ## Architecture
 ```
 /app/frontend/                    ← Vercel root directory
-├── api/                          ← Serverless funksjoner (Node 20)
-│   ├── auth.js                   POST /api/auth — bcrypt + signed cookie
-│   ├── me.js                     GET /api/me — verifiser cookie
-│   ├── logout.js                 POST /api/logout — rydd cookie
-│   └── _lib/session.js           jose JWT + cookie helpers
+├── api/                          ← Serverless funksjoner (Node 20, ESM via .mjs)
+│   ├── auth.mjs                  POST /api/auth — bcrypt + signed cookie
+│   ├── me.mjs                    GET /api/me — verifiser cookie
+│   ├── logout.mjs                POST /api/logout — rydd cookie
+│   └── _lib/session.mjs          jose JWT + cookie helpers
 ├── public/
-│   ├── clients/default.json      branding + bakgrunner
-│   └── url.json                  preset-URLer
+│   ├── clients/
+│   │   ├── default.json          branding + bakgrunner (default deploy)
+│   │   └── <kunde>.json          per-kunde branding/bakgrunner (REACT_APP_NAME_CONFIG)
+│   └── url.json                  preset-URLer (REACT_APP_NAME_URL bytter til url-<kunde>.json)
 ├── scripts/
 │   └── gen-hash.js               CLI: bcrypt-hash for AUTH_PASSWORD_HASH
 ├── src/
 │   ├── components/
 │   │   ├── AuthGate.js           Wrapper rundt App (checking|auth|unauth)
 │   │   ├── Login.js + .css       Branded login (KoDo Editor + kundenavn)
-│   │   ├── PasswordAdminPanel.js Hash-generator + Hash-tester (Settings)
-│   │   ├── SettingsModal.js      ← utvidet med PasswordAdminPanel
-│   │   ├── StatusBar.js          ← utvidet med "Logg ut"-knapp
-│   │   ├── GithubPushModal.js    (V5.2 — uendret)
-│   │   ├── DiffView.js           (V5.2 — uendret)
+│   │   ├── PasswordAdminPanel.js Hash-generator + JWT-secret-gen (Settings)
+│   │   ├── SettingsModal.js      Faner: Generelt (Tema + Bakgrunn + meta) / Sikkerhet
+│   │   ├── CategoryMenu.js       Kategori-handlinger (rename/add/move/delete)
+│   │   ├── PresetDropdown.js     Custom dark dropdown (URL/kategori-velger)
+│   │   ├── StatusBar.js          Logout-knapp
+│   │   ├── GithubPushModal.js
+│   │   ├── DiffView.js
 │   │   └── ...
 │   ├── hooks/
 │   │   ├── useAuth.js            login/logout/status mot /api
-│   │   ├── useBackground.js
+│   │   ├── useBackground.js      Henter /clients/<x>.json, bakgrunns-rotasjon
+│   │   ├── useTheme.js           Hardkodet tema-velger (Mørk/Lys/Blå/Oransje)
 │   │   └── useGithubSource.js
-│   ├── App.js (mottar `auth`-prop fra AuthGate)
-│   ├── index.js (wrapper App i AuthGate)
+│   ├── themes.js                 APP_VERSION + THEMES-konstant + utils
+│   ├── App.js                    (mottar `auth`-prop fra AuthGate)
+│   ├── index.js                  (wrapper App i AuthGate)
 │   └── App.css
 ├── .env / .env.example
 ├── vercel.json
-└── DEPLOYMENT.md                 ← oppdatert med komplett Vercel-oppsett
+└── DEPLOYMENT.md                 ← komplett Vercel-oppsett
 ```
 
 ## Vercel ENV
@@ -194,8 +200,44 @@ Se `/app/frontend/DEPLOYMENT.md` for komplett Vercel-setup (Root Directory=`fron
   - Setter `isDirty=true` på alle mutasjoner
   - Synlig kun når `jsonStructure.hasCategories` (multi-section JSON med `kategori`-felt)
 - ✅ **Fikset tabell-overskrift**: Tidligere hardkodet til "Pakker i ..." — nå bruker faktisk `itemsKey` fra JSON (f.eks. "Tjenester i ..." for tannlege-per).
-- ✅ **CategoryMenu visuell tilpasning**: trigger-knapp og popover speiler nå `PresetDropdown`-stilen (samme høyde, border-radius, glass-bakgrunn, accent-glow ved fokus). Ikoner beholdt i menyvalgene.
-- ✅ **H1 + browser-tittel dynamisk fra `_meta.client`**: Hardkodet `"Universal JSON Editor"` + tilfeldig undertittel fjernet. Erstattet med `"{_meta.client} — Innholdsredigering"`. Browser-tab-tittel settes via `useEffect` når config lastes. SUBTITLES-array og `randomSubtitle` slettet.
-- ✅ **Tema-velger (hardkodet)**: Ny `useTheme`-hook + `THEMES`-konstant i `themes.js`. Fire valg: Mørk (amber), Lys (amber), Blå, Oransje. Hver setter `--accent`-CSS-vars via `.theme-<id>`-klasse på `<html>`, og `.tone-light` styres nå av tema (overstyrer bakgrunnens tone). Persisterer i `localStorage` (`kodo-editor-theme-v1`). Ny "Tema"-seksjon over "Bakgrunn" i Innstillinger med fargepriklere.
+
+## V6.1 — Whitelabel-polish (2026-05, fork-sesjon)
+Tema-velger og dynamisk H1 slik at samme kodebase kan deployes til flere kunder uten visuell "KoDo Editor"-branding i selve editoren.
+
+### CategoryMenu visuell tilpasning
+- Trigger-knapp og popover speiler nå `PresetDropdown`-stilen: høyde 40px, border-radius 10px, glass-bakgrunn `rgba(255,255,255,0.03)`, accent-glow ved fokus/aktiv.
+- Chevron byttet til samme ▾-tegn som dropdown ved siden av for pixel-match.
+- Ikoner (pen/plus/pil/trash) beholdt inne i menyvalgene.
+- Light-tone-overrides oppdatert tilsvarende.
+- Filer: `src/components/CategoryMenu.js`, `src/components/CategoryMenu.css`.
+
+### Dynamisk H1 + browser-tab-tittel
+- Hardkodet `"Universal JSON Editor"` + tilfeldig undertittel fjernet.
+- H1 leser nå `bg.config?._meta?.client` → `"{kunde} — Innholdsredigering"` (fallback: `"Ko | Do Consult — Innholdsredigering"`).
+- Browser `document.title` settes via `useEffect` når clients/<x>.json er lastet — samme mønster.
+- `SUBTITLES`-array, `randomSubtitle`-helper og `subtitle`-state slettet fra `App.js`.
+- Favicon urørt — brukerønske.
+- Filer: `src/App.js`.
+
+### Tema-velger (hardkodet, uavhengig av bakgrunn)
+- Ny `THEMES`-konstant i `themes.js` med 4 valg:
+  - **Mørk** — `tone: dark`, accent `#FBBF24` (amber, default)
+  - **Lys** — `tone: light`, accent `#F59E0B`
+  - **Blå** — `tone: dark`, accent `#60A5FA`
+  - **Oransje** — `tone: dark`, accent `#FB923C`
+- Hver tema definerer `accent` + `accentSoft` + `accentGlow` for CSS-vars.
+- Ny `hooks/useTheme.js` — setter `.theme-<id>` + `.tone-<light|dark>` på `<html>`. Persisterer i `localStorage` (`kodo-editor-theme-v1`).
+- **Viktig endring:** tone-light styres nå av tema, IKKE bakgrunnens `tone`-felt. Bakgrunn = wallpaper, tema = panel-tone + accent.
+- CSS: `.theme-dark`/`.theme-light`/`.theme-blue`/`.theme-orange` i `src/index.css` overstyrer `--accent`/`--accent-soft`/`--accent-glow`/`--warn`/`--warn-soft`.
+- UI: Ny "Tema"-seksjon over "Bakgrunn" i SettingsModal Generelt-fane. Fargesirkel + label i pill-form. `data-testid="theme-pill-{id}"`.
+- Filer: `src/themes.js`, `src/hooks/useTheme.js` (ny), `src/App.js`, `src/index.css`, `src/components/SettingsModal.js`, `src/components/SettingsModal.css`.
+
+### Verifisert
+- Lint OK på alle endrede filer.
+- Smoke-test via Playwright: H1 viser `"Ko | Do Consult — Innholdsredigering"`, Innstillinger åpnes, klikk på "Blå"-pill kjører uten feil.
+- Bruker bekreftet visuelt at CategoryMenu nå matcher dropdown.
+
+### Klar for deploy
+Brukeren håndterer per-kunde-filer (`public/clients/<kunde>.json` + `public/url-<kunde>.json`) selv ifm. Vercel-deploy. Ingen kode-endringer trengs per kunde — kun env-vars `REACT_APP_NAME_CONFIG` og `REACT_APP_NAME_URL`.
 
 
