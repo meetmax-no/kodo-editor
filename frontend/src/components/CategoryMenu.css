@@ -1,75 +1,84 @@
-/* CategoryMenu — popover med kategori-handlinger */
+/* CategoryMenu — popover med kategori-handlinger.
+   Stil-samsvar med PresetDropdown (kategori-dropdown ved siden av). */
 
 .cat-menu-wrap {
   position: relative;
   display: inline-block;
 }
 
+/* ── Trigger-knapp: speiler .pdd-btn ── */
 .cat-menu-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  background: rgba(255, 255, 255, 0.04);
+  justify-content: space-between;
+  gap: 10px;
+  height: 40px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
-  color: var(--text-soft, rgba(255, 255, 255, 0.85));
-  height: 36px;
-  padding: 0 12px 0 11px;
-  border-radius: 8px;
-  cursor: pointer;
+  border-radius: 10px;
+  color: var(--text, rgba(255, 255, 255, 0.96));
   font-family: inherit;
   font-size: 13px;
-  font-weight: 500;
-  transition: background 140ms ease, color 140ms ease, border-color 140ms ease, transform 120ms ease;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 140ms ease;
+  text-align: left;
   margin-left: 6px;
   white-space: nowrap;
 }
+
 .cat-menu-trigger:hover {
-  background: rgba(251, 191, 36, 0.10);
-  color: var(--text, rgba(255, 255, 255, 0.96));
-  border-color: rgba(251, 191, 36, 0.35);
-}
-.cat-menu-trigger:active { transform: translateY(0.5px); }
-.cat-menu-trigger.open {
-  background: rgba(251, 191, 36, 0.14);
-  color: var(--accent, #FBBF24);
-  border-color: rgba(251, 191, 36, 0.5);
-}
-.cat-menu-icon-pen {
-  flex-shrink: 0;
-  opacity: 0.85;
-}
-.cat-menu-trigger:hover .cat-menu-icon-pen { opacity: 1; }
-.cat-menu-trigger-label {
-  letter-spacing: 0.005em;
-}
-.cat-menu-chevron {
-  flex-shrink: 0;
-  opacity: 0.55;
-  margin-left: 2px;
-  transition: transform 160ms ease, opacity 160ms ease;
-}
-.cat-menu-trigger:hover .cat-menu-chevron { opacity: 0.85; }
-.cat-menu-chevron.open {
-  transform: rotate(180deg);
-  opacity: 1;
+  border-color: var(--border-strong, rgba(255, 255, 255, 0.18));
+  background: rgba(255, 255, 255, 0.05);
 }
 
+.cat-menu-trigger.open {
+  border-color: var(--accent, #FBBF24);
+  box-shadow: 0 0 0 3px var(--accent-glow, rgba(251, 191, 36, 0.20));
+}
+
+.cat-menu-icon-pen {
+  flex-shrink: 0;
+  opacity: 0.75;
+  transition: opacity 140ms ease, color 140ms ease;
+}
+.cat-menu-trigger:hover .cat-menu-icon-pen { opacity: 1; }
+.cat-menu-trigger.open .cat-menu-icon-pen { color: var(--accent, #FBBF24); opacity: 1; }
+
+.cat-menu-trigger-label {
+  flex: 1;
+  letter-spacing: 0.005em;
+}
+
+.cat-menu-chevron {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-faint, rgba(255, 255, 255, 0.5));
+  transition: transform 160ms ease, color 160ms ease;
+}
+.cat-menu-chevron.open {
+  transform: rotate(180deg);
+  color: var(--accent, #FBBF24);
+}
+
+/* ── Popover: speiler .pdd-popover ── */
 .cat-menu-popover {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  min-width: 220px;
-  background: var(--glass-strong, rgba(15, 23, 42, 0.92));
-  border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.16));
+  min-width: 240px;
+  z-index: 100;
+  background: rgba(15, 19, 36, 0.97);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.18));
   border-radius: 12px;
   padding: 6px;
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  box-shadow: 0 18px 50px -16px rgba(0, 0, 0, 0.65);
-  z-index: 100;
+  box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.6);
   font-family: inherit;
   color: var(--text, rgba(255, 255, 255, 0.96));
-  animation: cat-menu-rise 140ms ease;
+  animation: cat-menu-rise 140ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes cat-menu-rise {
@@ -78,7 +87,7 @@
 }
 
 .cat-menu-header {
-  padding: 8px 10px 4px;
+  padding: 8px 10px 6px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -101,28 +110,29 @@
 
 .cat-menu-divider {
   height: 1px;
-  background: var(--border, rgba(255, 255, 255, 0.08));
+  background: rgba(255, 255, 255, 0.08);
   margin: 4px 0;
 }
 
+/* ── Item: speiler .pdd-item ── */
 .cat-menu-item {
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
+  padding: 8px 10px;
+  border: 0;
   background: transparent;
-  border: none;
-  color: var(--text, rgba(255, 255, 255, 0.92));
+  color: var(--text, rgba(255, 255, 255, 0.96));
   font-family: inherit;
   font-size: 13px;
-  padding: 7px 10px;
-  border-radius: 7px;
   cursor: pointer;
   text-align: left;
-  transition: background 120ms ease;
+  border-radius: 7px;
+  transition: background 100ms ease;
 }
 .cat-menu-item:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
 }
 .cat-menu-item:disabled {
   opacity: 0.35;
@@ -133,13 +143,17 @@
   height: 16px;
   flex-shrink: 0;
   opacity: 0.85;
+  color: var(--accent, #FBBF24);
 }
 .cat-menu-item:hover:not(:disabled) .cat-menu-icon { opacity: 1; }
+
 .cat-menu-danger { color: #fca5a5; }
+.cat-menu-danger .cat-menu-icon { color: #fca5a5; }
 .cat-menu-danger:hover:not(:disabled) {
-  background: rgba(220, 38, 38, 0.15);
+  background: rgba(220, 38, 38, 0.14);
 }
 
+/* ── Form (rename / add) ── */
 .cat-menu-form {
   padding: 8px 10px;
   display: flex;
@@ -149,7 +163,7 @@
 .cat-menu-input {
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
-  border-radius: 7px;
+  border-radius: 8px;
   color: var(--text, rgba(255, 255, 255, 0.96));
   font-family: inherit;
   font-size: 13px;
@@ -159,7 +173,7 @@
 }
 .cat-menu-input:focus {
   border-color: var(--accent, #FBBF24);
-  box-shadow: 0 0 0 3px var(--accent-soft, rgba(251, 191, 36, 0.12));
+  box-shadow: 0 0 0 3px var(--accent-glow, rgba(251, 191, 36, 0.20));
 }
 
 .cat-menu-form-actions {
@@ -170,13 +184,13 @@
 }
 .cat-menu-btn {
   border: none;
-  border-radius: 7px;
+  border-radius: 8px;
   font-family: inherit;
   font-size: 12px;
   font-weight: 500;
   padding: 7px 12px;
   cursor: pointer;
-  transition: opacity 120ms ease, transform 120ms ease;
+  transition: opacity 120ms ease, transform 120ms ease, background 120ms ease;
 }
 .cat-menu-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .cat-menu-btn-primary {
@@ -186,15 +200,24 @@
 }
 .cat-menu-btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
 .cat-menu-btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   color: var(--text-soft, rgba(255, 255, 255, 0.85));
   border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
 }
-.cat-menu-btn-secondary:hover { background: rgba(255, 255, 255, 0.14); }
+.cat-menu-btn-secondary:hover { background: rgba(255, 255, 255, 0.12); }
 
-/* Light tone overrides */
+/* ── Light tone overrides ── */
+:root.tone-light .cat-menu-trigger {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: rgba(15, 23, 42, 0.92);
+}
+:root.tone-light .cat-menu-trigger:hover {
+  background: rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.20);
+}
 :root.tone-light .cat-menu-popover {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.97);
   border-color: rgba(15, 23, 42, 0.10);
   color: rgba(15, 23, 42, 0.92);
 }
@@ -210,3 +233,4 @@
   color: rgba(15, 23, 42, 0.92);
 }
 :root.tone-light .cat-menu-divider { background: rgba(15, 23, 42, 0.08); }
+:root.tone-light .cat-menu-chevron { color: rgba(15, 23, 42, 0.5); }
