@@ -138,13 +138,23 @@ function HashGenerator() {
           <div className="pwd-warning" data-testid="hashgen-warning">
             ⚠️ Lukk dette vinduet når du er ferdig. Hashen ligger ikke noe annet sted.
           </div>
+          <div className="pwd-tip" data-testid="hashgen-tip">
+            💡 <strong>Tips</strong>: Verifiser hashen med <em>Test eksisterende hash</em> nedenfor
+            før du limer den inn i Vercel — da unngår du nattlige 500-meldinger.
+          </div>
           <ol className="pwd-steps">
             <li>Åpne Vercel Dashboard → Project → Settings → Environment Variables</li>
-            <li>Erstatt verdien for <code>AUTH_PASSWORD_HASH</code> med hashen over</li>
+            <li>Erstatt verdien for <code>AUTH_PASSWORD_HASH</code> med hashen over.
+                Sørg for at alle 3 scopes (Production / Preview / Development) er huket av.</li>
             <li>Klikk <strong>Save</strong> → gå til Deployments → klikk … på siste deploy → <strong>Redeploy</strong></li>
             <li>Vent ~90 sek til ny build er live</li>
             <li>Send det nye passordet til kunde via sikker kanal</li>
           </ol>
+          <div className="pwd-note">
+            <strong>NB:</strong> Når du har limt hashen inn i Vercel og lagret, kan du
+            ikke lese den ut igjen som klartekst — Vercel viser kun "•••••••". Hvis du må verifisere
+            senere: generer på nytt fra passordet og sammenlign her.
+          </div>
         </div>
       )}
     </div>

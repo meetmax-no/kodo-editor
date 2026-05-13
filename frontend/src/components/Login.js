@@ -31,7 +31,32 @@ export default function Login({ onLogin, error, brand: brandProp }) {
     tagline: 'Universal JSON Editor',
   };
 
-  const displayedError = localError || error;
+  // Admin-modus: vis detaljert teknisk feilmelding ved server-feil (5xx)
+  const showAdminDetails = process.env.REACT_APP_SHOW_ADMIN_TOOLS === 'true';
+
+  // `error` fra useAuth er { status, message, code } eller string (localError).
+  const renderError = () => {
+    const e = localError || error;
+    if (!e) return null;
+    // localError er en string
+    if (typeof e === 'string') return <span>{e}</span>;
+    // Server-feil 5xx → vis admin-info hvis aktivert
+    if (e.status >= 500 && showAdminDetails) {
+      return (
+        <div>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>
+            Server-feil ({e.status}{e.code ? ` · ${e.code}` : ''})
+          </div>
+          <div style={{ fontSize: 12, lineHeight: 1.5 }}>{e.message}</div>
+        </div>
+      );
+    }
+    if (e.status >= 500) {
+      return <span>Det oppstod en server-feil. Kontakt administrator.</span>;
+    }
+    // 4xx — vis selve meldingen (f.eks. "Feil passord")
+    return <span>{e.message}</span>;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -106,9 +131,9 @@ export default function Login({ onLogin, error, brand: brandProp }) {
               <span>Husk meg i 30 dager</span>
             </label>
 
-            {displayedError && (
+            {(localError || error) && (
               <div className="login-error" data-testid="login-error" role="alert">
-                {displayedError}
+                {renderError()}
               </div>
             )}
 

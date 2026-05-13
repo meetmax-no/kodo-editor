@@ -59,14 +59,19 @@ export default function useAuth() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || `HTTP ${res.status}`);
+        // Behold rå info så Login kan vise admin-detaljer ved server-feil (>=500)
+        setError({
+          status: res.status,
+          message: data.error || `HTTP ${res.status}`,
+          code: data.code || null,
+        });
         return false;
       }
       setStatus('authenticated');
       setClient(data.client || 'default');
       return true;
     } catch (err) {
-      setError(err.message || 'Innlogging feilet');
+      setError({ status: 0, message: err.message || 'Innlogging feilet', code: 'NETWORK' });
       return false;
     }
   }, []);
