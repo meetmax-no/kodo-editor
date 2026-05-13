@@ -121,6 +121,54 @@ Pulle https://github.com/meetmax-no/kodo-editor og les dokumentasjonen. CRA-app 
 
 **CLI backup**: `yarn gen-hash` eller `node scripts/gen-hash.js <passord>` for terminal-flow.
 
+### V6.1 — Whitelabel + polish (2026-05) ✨
+Iterativ runde med små-til-mellomstore endringer mens kunde-deploy (Tannlege Per) ble forberedt. Felles mål: én kodebase, flere kunder, ingen synlig "KoDo Editor"-branding i selve editoren for sluttkunde.
+
+**Multi-tenant config:**
+- `REACT_APP_NAME_CONFIG` env-var (default `default`) → leser `/public/clients/<navn>.json` for branding + bakgrunner.
+- `REACT_APP_NAME_URL` env-var → leser `/public/url-<kundenavn>.json` for preset-URLer, så hver kunde ser kun sine egne datakilder.
+- `useBackground` og Login-skjermen henter samme config-fil; brand-felter (`brand.name`, `_meta.client`, `_meta.createdBy`, `brand.tagline`) brukes overalt.
+
+**SettingsModal-faner:**
+- Delt i "Generelt" (Tema + Bakgrunn + meta) og "Sikkerhet" (Auth-secrets, kun under `REACT_APP_SHOW_ADMIN_TOOLS=true`).
+- Hash-tester fjernet (Vercel "Sensitive" env-vars ikke lesbare → testen var meningsløs).
+- Innebygd JWT-secret-generator (`crypto.getRandomValues`, 32/48/64 bytes).
+
+**CategoryMenu (ny komponent):**
+- ⋯-knapp ved siden av kategori-dropdown med popover for:
+  - ✏️ Endre navn (inline)
+  - ➕ Ny kategori (auto-bytter til ny)
+  - ↑↓ Flytt opp/ned
+  - 🗑 Slett (med `useConfirm`)
+- Setter `isDirty=true` på alle mutasjoner; synlig kun når `jsonStructure.hasCategories`.
+- Visuell stil matcher `PresetDropdown` (samme høyde 40px, border-radius 10px, glass-bakgrunn, accent-glow ved fokus, ▾-chevron). Ikoner beholdt inne i menyvalgene.
+
+**Tabell-overskrift:**
+- Var hardkodet `"Pakker i ..."` — leser nå faktisk `itemsKey` fra JSON (f.eks. `"Tjenester i Demo"` for tannlege-per).
+
+**Dynamisk H1 + browser-tab-tittel:**
+- Hardkodet `"Universal JSON Editor"` + tilfeldig undertittel fjernet.
+- H1: `"{_meta.client} — Innholdsredigering"` fra clients/<x>.json.
+- `document.title` settes via `useEffect` når config lastes.
+- `SUBTITLES`-array og `randomSubtitle`-helper slettet.
+
+**Tema-velger (hardkodet, uavhengig av bakgrunn):**
+- `THEMES`-konstant i `themes.js`: Mørk (amber #FBBF24), Lys (amber #F59E0B), Blå (#60A5FA), Oransje (#FB923C).
+- Ny `hooks/useTheme.js` med localStorage-persistens (`kodo-editor-theme-v1`).
+- Hver tema setter `.theme-<id>` + `.tone-<light|dark>` på `<html>` → overstyrer `--accent`/`--accent-soft`/`--accent-glow`/`--warn`/`--warn-soft` CSS-vars.
+- Viktig: tone styres nå av tema (ikke av bakgrunnens `tone`-felt). Bakgrunn = wallpaper, tema = panel-tone + accent.
+- UI: "Tema"-seksjon over "Bakgrunn" i SettingsModal Generelt-fane med fargeprikker + label.
+
+**Versjons-konstant:**
+- `APP_VERSION` sentralisert i `themes.js` (nå `v6.1`). Brukes i topbar og login-footer.
+
+**Vercel deploy-fikser (underveis):**
+- Konvertert `/api/`-mappa fra `.js` (CJS) til `.mjs` (ESM) for å fungere med `jose v6` som er ESM-only.
+- Fjernet `api/package.json` etter konflikt mellom `{"type":"module"}` og Vercel build-pipeline.
+- Bedre 500-feilmeldinger med error codes (`MISSING_HASH`, `INVALID_HASH`, `MISSING_JWT_SECRET`, `JWT_TOO_SHORT`, `INTERNAL`). Admin ser detaljer; kunde får generisk melding.
+- Login-bakgrunn arver app-bakgrunn via `AuthGate-useBackground(null)` (ikke hardkodet svart).
+- Login-kortet bruker `var(--glass-strong)` + `backdrop-filter: blur(20px) saturate(140%)` for konsistens.
+
 ## Data flow
 - AuthGate (root wrapper) sjekker `/api/me` ved mount → renderer Login eller App.
 - App mottar `auth`-prop → videresender til StatusBar (`onLogout`, `showLogout`).
@@ -178,66 +226,26 @@ Se `/app/frontend/DEPLOYMENT.md` for komplett Vercel-setup (Root Directory=`fron
 - ✅ Fullstendig e2e-testet, 100% success
 
 ## Patches etter første deploy (2026-05-13, samme sesjon)
-- ✅ Bedre 500-feilmeldinger med error codes (MISSING_HASH, INVALID_HASH, MISSING_JWT_SECRET, JWT_TOO_SHORT, INTERNAL). Admin-modus viser detaljer; kunde får generisk melding.
-- ✅ Login bakgrunn arver app-bakgrunn via AuthGate-`useBackground(null)` — ikke lenger hardkodet svart
-- ✅ Login-kortet bruker `var(--glass-strong)` / `backdrop-filter: blur(20px) saturate(140%)` — samme glass-stil som resten av appen
-- ✅ Innebygd JWT-secret-generator (crypto.getRandomValues, 32/48/64 bytes)
-- ✅ **Fikset Vercel deploy-error (runde 1)**: `jose v6` er ESM-only og kunne ikke `require()`-es. Konvertert hele `/api/`-mappa til ESM.
-- ✅ **Fikset Vercel deploy-error (runde 2)**: `{"type":"module"}` i `api/package.json` + `.js`-extension kolliderte med Vercel build-pipeline (transpilert CJS-output mens Node forventet ESM → "exports is not defined"). Løsning: brukt `.mjs`-extension direkte (`auth.mjs`, `me.mjs`, `logout.mjs`, `_lib/session.mjs`) → utvetydig ESM uten transpilering. Fjernet `api/package.json`.
-- ✅ **Fjernet hash-tester**: Vercel ENV-vars markert "Sensitive" (default + best practice) er ikke lesbare etter save → ingen måte å sammenligne mot stored hash → testeren hadde ingen reell nytteverdi.
-- ✅ **Settings-faner**: SettingsModal delt i to faner — "Generelt" (config-info + bakgrunn) og "Sikkerhet" (Auth-secrets). Sikkerhet-fanen vises kun når `REACT_APP_SHOW_ADMIN_TOOLS=true`. Modalen er nå kortere og mer logisk strukturert.
-- ✅ **Multi-tenant via `REACT_APP_NAME_CONFIG`**: Samme mønster som `REACT_APP_NAME_URL`. Default-verdi `default` → `/clients/default.json`. Multi-tenant: sett til kundens id (f.eks. `acme`) → leser `/clients/acme.json`. Påvirker både `useBackground`-hook og Login-skjermens branding-fetch.
-- ✅ **Login-styling**: Branding-felt hentet fra `clients/<x>.json`:
-  - Stor tittel = `brand.name`
-  - Subtittel = `_meta.createdBy`
-  - Footer = `_meta.client · brand.tagline · APP_VERSION`
-- ✅ **Versjons-konstant**: `APP_VERSION` sentralisert i `themes.js` (`v6.0`). Brukes i topbar og login.
-- ✅ **Kategori-administrasjon**: Ny `CategoryMenu`-komponent (⋯-ikon ved siden av kategori-dropdown). Støtter:
-  - ✏️ Endre navn (inline tekst-input)
-  - ➕ Ny kategori (auto-switcher til ny)
-  - ↑↓ Flytt opp/ned
-  - 🗑 Slett (med bekreftelse via `useConfirm`)
-  - Setter `isDirty=true` på alle mutasjoner
-  - Synlig kun når `jsonStructure.hasCategories` (multi-section JSON med `kategori`-felt)
-- ✅ **Fikset tabell-overskrift**: Tidligere hardkodet til "Pakker i ..." — nå bruker faktisk `itemsKey` fra JSON (f.eks. "Tjenester i ..." for tannlege-per).
+Alle disse var iterativ polish som ledet fram til **V6.1**. Se `## V6.1 — Whitelabel + polish` over for samlet beskrivelse av:
+- Vercel deploy-fikser (jose v6 ESM → `.mjs`, fjernet api/package.json)
+- Bedre 500-feilmeldinger med error codes
+- Login-bakgrunn arver app-bakgrunn (ikke hardkodet svart)
+- Innebygd JWT-secret-generator
+- Hash-tester fjernet (Vercel Sensitive vars ikke lesbare)
+- SettingsModal-faner (Generelt + Sikkerhet)
+- Multi-tenant via `REACT_APP_NAME_CONFIG`
+- Login-styling henter branding fra `clients/<x>.json`
+- `APP_VERSION` sentralisert i `themes.js`
+- CategoryMenu-komponent (rename/add/move/delete)
+- Tabell-overskrift bruker `itemsKey` fra JSON
+- CategoryMenu visuell match med PresetDropdown
+- Dynamisk H1 + browser-tab-tittel fra `_meta.client`
+- Hardkodet tema-velger (Mørk/Lys/Blå/Oransje)
 
-## V6.1 — Whitelabel-polish (2026-05, fork-sesjon)
-Tema-velger og dynamisk H1 slik at samme kodebase kan deployes til flere kunder uten visuell "KoDo Editor"-branding i selve editoren.
+## Status
+- **Versjon: v6.1** (satt i `themes.js`).
+- Klar for kunde-deploy (Tannlege Per). Bruker håndterer `public/clients/<kunde>.json` + `public/url-<kunde>.json` selv ifm. Vercel-deploy.
+- Ingen kode-endringer per kunde — kun env-vars `REACT_APP_NAME_CONFIG` og `REACT_APP_NAME_URL`.
 
-### CategoryMenu visuell tilpasning
-- Trigger-knapp og popover speiler nå `PresetDropdown`-stilen: høyde 40px, border-radius 10px, glass-bakgrunn `rgba(255,255,255,0.03)`, accent-glow ved fokus/aktiv.
-- Chevron byttet til samme ▾-tegn som dropdown ved siden av for pixel-match.
-- Ikoner (pen/plus/pil/trash) beholdt inne i menyvalgene.
-- Light-tone-overrides oppdatert tilsvarende.
-- Filer: `src/components/CategoryMenu.js`, `src/components/CategoryMenu.css`.
-
-### Dynamisk H1 + browser-tab-tittel
-- Hardkodet `"Universal JSON Editor"` + tilfeldig undertittel fjernet.
-- H1 leser nå `bg.config?._meta?.client` → `"{kunde} — Innholdsredigering"` (fallback: `"Ko | Do Consult — Innholdsredigering"`).
-- Browser `document.title` settes via `useEffect` når clients/<x>.json er lastet — samme mønster.
-- `SUBTITLES`-array, `randomSubtitle`-helper og `subtitle`-state slettet fra `App.js`.
-- Favicon urørt — brukerønske.
-- Filer: `src/App.js`.
-
-### Tema-velger (hardkodet, uavhengig av bakgrunn)
-- Ny `THEMES`-konstant i `themes.js` med 4 valg:
-  - **Mørk** — `tone: dark`, accent `#FBBF24` (amber, default)
-  - **Lys** — `tone: light`, accent `#F59E0B`
-  - **Blå** — `tone: dark`, accent `#60A5FA`
-  - **Oransje** — `tone: dark`, accent `#FB923C`
-- Hver tema definerer `accent` + `accentSoft` + `accentGlow` for CSS-vars.
-- Ny `hooks/useTheme.js` — setter `.theme-<id>` + `.tone-<light|dark>` på `<html>`. Persisterer i `localStorage` (`kodo-editor-theme-v1`).
-- **Viktig endring:** tone-light styres nå av tema, IKKE bakgrunnens `tone`-felt. Bakgrunn = wallpaper, tema = panel-tone + accent.
-- CSS: `.theme-dark`/`.theme-light`/`.theme-blue`/`.theme-orange` i `src/index.css` overstyrer `--accent`/`--accent-soft`/`--accent-glow`/`--warn`/`--warn-soft`.
-- UI: Ny "Tema"-seksjon over "Bakgrunn" i SettingsModal Generelt-fane. Fargesirkel + label i pill-form. `data-testid="theme-pill-{id}"`.
-- Filer: `src/themes.js`, `src/hooks/useTheme.js` (ny), `src/App.js`, `src/index.css`, `src/components/SettingsModal.js`, `src/components/SettingsModal.css`.
-
-### Verifisert
-- Lint OK på alle endrede filer.
-- Smoke-test via Playwright: H1 viser `"Ko | Do Consult — Innholdsredigering"`, Innstillinger åpnes, klikk på "Blå"-pill kjører uten feil.
-- Bruker bekreftet visuelt at CategoryMenu nå matcher dropdown.
-
-### Klar for deploy
-Brukeren håndterer per-kunde-filer (`public/clients/<kunde>.json` + `public/url-<kunde>.json`) selv ifm. Vercel-deploy. Ingen kode-endringer trengs per kunde — kun env-vars `REACT_APP_NAME_CONFIG` og `REACT_APP_NAME_URL`.
 
 
