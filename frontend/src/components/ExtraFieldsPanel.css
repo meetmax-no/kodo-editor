@@ -1,0 +1,201 @@
+/* ExtraFieldsPanel — V5.0 dark theme */
+
+.efp-wrapper {
+  margin: 0 0 20px;
+}
+
+.efp-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.efp-header-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint, rgba(255, 255, 255, 0.5));
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.efp-header-count {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent, #FBBF24);
+  background: var(--accent-soft, rgba(251, 191, 36, 0.14));
+  border: 1px solid rgba(251, 191, 36, 0.30);
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+
+.efp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 12px;
+}
+
+.efp-card {
+  background: var(--glass, rgba(255, 255, 255, 0.04));
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 160ms ease;
+}
+
+.efp-card.open {
+  border-color: var(--border-strong, rgba(255, 255, 255, 0.18));
+  background: var(--glass-strong, rgba(255, 255, 255, 0.07));
+  box-shadow: 0 12px 24px -12px rgba(0, 0, 0, 0.4);
+}
+
+.efp-card-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: none;
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 120ms ease;
+  color: var(--text, rgba(255, 255, 255, 0.96));
+}
+
+.efp-card.open .efp-card-toggle {
+  border-bottom-color: var(--border, rgba(255, 255, 255, 0.10));
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.efp-card-toggle:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.efp-chevron {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--text-faint, rgba(255, 255, 255, 0.5));
+  transition: transform 160ms ease;
+}
+
+.efp-chevron.open {
+  transform: rotate(90deg);
+  color: var(--accent, #FBBF24);
+}
+
+.efp-card-title {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text, rgba(255, 255, 255, 0.96));
+  flex: 1;
+}
+
+.efp-card-meta {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10px;
+  color: var(--text-faint, rgba(255, 255, 255, 0.5));
+}
+
+.efp-card-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.efp-field {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.efp-field-label {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 12px;
+  color: var(--text-soft, rgba(255, 255, 255, 0.65));
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.efp-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text, rgba(255, 255, 255, 0.96));
+  background: rgba(255, 255, 255, 0.03);
+  font-family: inherit;
+  transition: all 140ms ease;
+  outline: none;
+}
+
+.efp-input:focus {
+  border-color: var(--accent, #FBBF24);
+  box-shadow: 0 0 0 3px var(--accent-glow, rgba(251, 191, 36, 0.20));
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.efp-input.edited {
+  background: var(--warn-soft, rgba(251, 191, 36, 0.18));
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #FCD34D;
+}
+
+.efp-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent, #FBBF24);
+  cursor: pointer;
+}
+
+.efp-edit-btn {
+  padding: 7px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-soft, rgba(255, 255, 255, 0.65));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 140ms ease;
+  font-family: inherit;
+  text-align: left;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: start;
+  max-width: 100%;
+}
+
+.efp-edit-btn:hover {
+  background: var(--glass-strong, rgba(255, 255, 255, 0.07));
+  border-color: var(--border-strong, rgba(255, 255, 255, 0.18));
+  color: var(--text, rgba(255, 255, 255, 0.96));
+}
+
+.efp-edit-btn.edited {
+  background: var(--warn-soft, rgba(251, 191, 36, 0.18));
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #FCD34D;
+}
+
+.efp-edit-btn.color { padding: 4px 12px 4px 4px; }
+
+.efp-color-box {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 2px 6px -2px rgba(0, 0, 0, 0.5);
+  flex-shrink: 0;
+}

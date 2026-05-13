@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<title>Mockup D — Soft Glass · KoDo Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #050816;
+    --bg-1: #0B1226;
+    --bg-2: #111A33;
+    --glass: rgba(255, 255, 255, 0.04);
+    --glass-strong: rgba(255, 255, 255, 0.07);
+    --border: rgba(255, 255, 255, 0.10);
+    --border-strong: rgba(255, 255, 255, 0.18);
+    --text: rgba(255, 255, 255, 0.96);
+    --text-soft: rgba(255, 255, 255, 0.65);
+    --text-faint: rgba(255, 255, 255, 0.42);
+    --accent: #34D399;          /* emerald — matcher bankboks */
+    --accent-glow: rgba(52, 211, 153, 0.35);
+    --warn: #FBBF24;
+    --warn-glow: rgba(251, 191, 36, 0.18);
+    --danger: #F87171;
+    --sans: 'Geist', system-ui, sans-serif;
+    --mono: 'Geist Mono', ui-monospace, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { min-height: 100vh; }
+  body {
+    background: var(--bg-base);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(1200px 800px at 10% -10%, rgba(52, 211, 153, 0.10), transparent 50%),
+      radial-gradient(1000px 700px at 110% 0%, rgba(99, 102, 241, 0.08), transparent 55%),
+      radial-gradient(800px 600px at 50% 110%, rgba(244, 114, 182, 0.06), transparent 55%);
+    background-attachment: fixed;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 64px 64px;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse at top, rgba(0,0,0,0.5), transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at top, rgba(0,0,0,0.5), transparent 70%);
+    z-index: 0;
+  }
+
+  .shell { max-width: 1720px; margin: 0 auto; padding: 28px 28px 80px; position: relative; z-index: 1; }
+
+  /* Topbar */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+    background: var(--glass);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 20px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .brand-logo {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #FFD60A 0%, #FBBF24 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--sans);
+    font-weight: 800; color: #1F1F1F;
+    font-size: 16px; letter-spacing: -0.04em;
+    box-shadow: 0 8px 24px -8px rgba(255, 214, 10, 0.5);
+  }
+  .brand-text {
+    display: flex; flex-direction: column; gap: 0px;
+  }
+  .brand-name {
+    font-size: 18px; font-weight: 700;
+    letter-spacing: -0.025em;
+    background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .brand-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.02em;
+  }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* Buttons */
+  .btn {
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 13px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    color: var(--text-soft);
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 160ms ease;
+    backdrop-filter: blur(8px);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { border-color: var(--border-strong); color: var(--text); background: var(--glass-strong); }
+  .btn.primary {
+    background: linear-gradient(180deg, var(--accent) 0%, #10B981 100%);
+    color: #042F1B;
+    border-color: transparent;
+    box-shadow: 0 4px 16px -4px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.3);
+    font-weight: 600;
+  }
+  .btn.primary:hover { box-shadow: 0 6px 22px -4px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.4); transform: translateY(-1px); }
+  .btn.kbd {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+  .btn.kbd kbd {
+    background: rgba(255,255,255,0.08);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 10px;
+    border: 1px solid var(--border);
+  }
+
+  /* Load card */
+  .load-card {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+  }
+  .load-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+  .load-tab {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text-soft);
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .load-tab.active {
+    background: var(--glass-strong);
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .url-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .url-select, .url-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    outline: none;
+    transition: all 160ms;
+  }
+  .url-input { font-family: var(--mono); font-size: 12px; }
+  .url-input:focus, .url-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+  /* Sections */
+  .sections-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    background: var(--glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 8px;
+    overflow-x: auto;
+  }
+  .section-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-soft);
+    transition: all 160ms;
+    white-space: nowrap;
+    position: relative;
+  }
+  .section-tab:hover { background: var(--glass-strong); color: var(--text); }
+  .section-tab.active {
+    background: rgba(52, 211, 153, 0.12);
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px rgba(52, 211, 153, 0.25);
+  }
+  .section-tab .icon { font-family: var(--mono); opacity: 0.7; }
+  .section-tab .count {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-faint);
+    background: rgba(255,255,255,0.05);
+    padding: 1px 7px;
+    border-radius: 999px;
+  }
+  .section-tab.active .count { color: var(--accent); background: rgba(52, 211, 153, 0.15); }
+  .section-tab .dirty {
+    width: 6px; height: 6px; border-radius: 999px;
+    background: var(--warn);
+    box-shadow: 0 0 8px var(--warn-glow);
+  }
+
+  /* Status row */
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-soft);
+    backdrop-filter: blur(10px);
+  }
+  .status-pill .dot {
+    width: 6px; height: 6px; border-radius: 999px;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+  .status-pill.dirty { color: var(--warn); border-color: rgba(251, 191, 36, 0.3); background: var(--warn-glow); }
+  .status-pill.dirty .dot { background: var(--warn); box-shadow: 0 0 8px var(--warn-glow); animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .nav-arrows { display: flex; gap: 4px; margin-left: auto; }
+
+  /* Table */
+  .table-card {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .table-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+  .table-title {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .table-title .accent-bar {
+    width: 3px; height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+  .filter-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    background: rgba(52, 211, 153, 0.12);
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(52, 211, 153, 0.25);
+    text-transform: none;
+  }
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 12px;
+    width: 280px;
+  }
+  .search-box input {
+    border: 0; background: transparent;
+    color: var(--text);
+    font-family: var(--sans); font-size: 12px;
+    outline: none; flex: 1;
+  }
+  .search-box input::placeholder { color: var(--text-faint); }
+
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left;
+    padding: 11px 18px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: rgba(255,255,255,0.015);
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 12px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 13px;
+    color: var(--text);
+    vertical-align: middle;
+  }
+  tbody tr { transition: background 160ms; position: relative; }
+  tbody tr:hover { background: rgba(255,255,255,0.025); }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr.edited::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--warn);
+    box-shadow: 0 0 12px var(--warn-glow);
+  }
+  .cell-edited {
+    background: var(--warn-glow);
+    box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.4);
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: var(--warn);
+  }
+
+  td .key { font-family: var(--mono); font-size: 12px; color: var(--text-soft); }
+  td .label-text { font-weight: 500; }
+
+  .color-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px 4px 4px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 160ms;
+  }
+  .color-chip:hover { border-color: var(--border-strong); background: var(--glass-strong); }
+  .color-chip-box {
+    width: 18px; height: 18px;
+    border-radius: 999px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.15), 0 4px 8px -2px rgba(0,0,0,0.4);
+  }
+  .icon-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--text-soft);
+    font-size: 12px;
+  }
+  .checkbox-toggle {
+    width: 32px; height: 18px;
+    background: rgba(52, 211, 153, 0.85);
+    border-radius: 999px;
+    position: relative;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(52, 211, 153, 0.3);
+  }
+  .checkbox-toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px; right: 2px;
+    width: 14px; height: 14px;
+    background: white;
+    border-radius: 999px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  .row-actions { display: inline-flex; gap: 2px; }
+  .row-actions button {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-faint);
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 160ms;
+  }
+  .row-actions button:hover { background: var(--glass-strong); color: var(--text); border-color: var(--border); }
+  .row-actions .delete:hover { color: var(--danger); background: rgba(248, 113, 113, 0.1); border-color: rgba(248, 113, 113, 0.3); }
+
+  /* Action buttons row */
+  .action-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .btn-add {
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.025);
+    border: 1px dashed var(--border-strong);
+    border-radius: 10px;
+    color: var(--text-soft);
+    font-family: var(--sans);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 160ms;
+  }
+  .btn-add:hover { color: var(--accent); border-color: var(--accent); background: rgba(52, 211, 153, 0.05); }
+
+  /* Footer status bar */
+  .footerbar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(5, 8, 22, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    color: var(--text-soft);
+    font-family: var(--mono);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    padding: 7px 24px;
+    gap: 24px;
+    z-index: 100;
+  }
+  .footerbar > * { display: flex; align-items: center; gap: 6px; }
+  .footerbar .ok { color: var(--accent); }
+  .footerbar .ok::before { content: '●'; color: var(--accent); }
+  .footerbar .dirty { color: var(--warn); }
+  .footerbar .dirty::before { content: '●'; color: var(--warn); animation: pulse 1.4s ease-in-out infinite; }
+  .footerbar .right { margin-left: auto; color: var(--text-faint); }
+  .footerbar kbd {
+    background: rgba(255,255,255,0.08);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    border: 1px solid var(--border);
+  }
+
+  /* Mockup label */
+  .mockup-label {
+    position: fixed;
+    top: 16px; right: 16px;
+    background: rgba(52, 211, 153, 0.95);
+    color: #042F1B;
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    z-index: 200;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    box-shadow: 0 8px 24px -8px var(--accent-glow);
+  }
+</style>
+</head>
+<body>
+<div class="mockup-label">Mockup D · Soft Glass</div>
+
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-logo">Ko</div>
+      <div class="brand-text">
+        <div class="brand-name">KoDo · Editor</div>
+        <div class="brand-tag">Universal JSON Editor · v4.1</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn kbd"><kbd>⌘</kbd> <kbd>K</kbd> Søk</button>
+      <button class="btn">↶ Angre</button>
+      <button class="btn">↷ Gjenopprett</button>
+      <button class="btn primary">✨ Ny JSON</button>
+    </div>
+  </div>
+
+  <div class="load-card">
+    <div class="load-tabs">
+      <div class="load-tab active">🔗 Fra URL</div>
+      <div class="load-tab">📁 Lokal fil</div>
+    </div>
+    <div class="url-input-row">
+      <select class="url-select">
+        <option>ToDo Planner — Me &amp; Max</option>
+      </select>
+      <input class="url-input" value="https://raw.githubusercontent.com/meetmax-no/Calender/.../meetmax.json">
+      <button class="btn primary">Last inn →</button>
+    </div>
+  </div>
+
+  <div class="sections-wrap">
+    <div class="section-tab"><span class="icon">▪</span> Rot-felter <span class="count">6</span></div>
+    <div class="section-tab"><span class="icon">⇄</span> _meta <span class="count">4</span></div>
+    <div class="section-tab active"><span class="icon">⊞</span> taskTypes <span class="count">7</span><span class="dirty"></span></div>
+    <div class="section-tab"><span class="icon">▤</span> palette <span class="count">10</span></div>
+    <div class="section-tab"><span class="icon">⇄</span> holidays <span class="count">25</span></div>
+    <div class="section-tab"><span class="icon">⇄</span> commercialDays <span class="count">11</span></div>
+    <div class="section-tab"><span class="icon">▤</span> backgrounds <span class="count">9</span></div>
+  </div>
+
+  <div class="status-row">
+    <div class="status-pill"><span class="dot"></span>Data lastet · 7 seksjoner · 95 rader</div>
+    <div class="status-pill dirty"><span class="dot"></span>2 ulagrede endringer · ⌘Z for å angre</div>
+    <div class="nav-arrows">
+      <button class="btn">← Forrige</button>
+      <button class="btn">Neste →</button>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-head">
+      <div class="table-title">
+        <span class="accent-bar"></span>
+        Items i "taskTypes"
+        <span class="filter-tag">7 av 7</span>
+      </div>
+      <div class="search-box">
+        <span style="color: var(--text-faint)">⌕</span>
+        <input type="text" placeholder="Søk i alle felter…">
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Nøkkel</th>
+          <th>Label</th>
+          <th>Icon</th>
+          <th>Color</th>
+          <th>Slot</th>
+          <th>Active</th>
+          <th style="width:140px">Aksjon</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="edited">
+          <td><span class="key">T1</span></td>
+          <td><span class="cell-edited">AnnetXX</span></td>
+          <td><span class="icon-chip">✦ Sparkles</span></td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#A855F7"></span>#A855F7</span></td>
+          <td><span class="key">08-10</span></td>
+          <td><div class="checkbox-toggle"></div></td>
+          <td><div class="row-actions"><button>▲</button><button>▼</button><button>⧉</button><button class="delete">✕</button></div></td>
+        </tr>
+        <tr>
+          <td><span class="key">T2</span></td>
+          <td><span class="label-text">Drift &amp; Økonomi</span></td>
+          <td><span class="icon-chip">🌐 Globe</span></td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#FF0000"></span>#FF0000</span></td>
+          <td><span class="key">08-10</span></td>
+          <td><div class="checkbox-toggle"></div></td>
+          <td><div class="row-actions"><button>▲</button><button>▼</button><button>⧉</button><button class="delete">✕</button></div></td>
+        </tr>
+        <tr>
+          <td><span class="key">T3</span></td>
+          <td><span class="label-text">Forretningsutvikling</span></td>
+          <td><span class="icon-chip">✦ Sparkles</span></td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#FFD700"></span>#FFD700</span></td>
+          <td><span class="key">10-12</span></td>
+          <td><div class="checkbox-toggle"></div></td>
+          <td><div class="row-actions"><button>▲</button><button>▼</button><button>⧉</button><button class="delete">✕</button></div></td>
+        </tr>
+        <tr>
+          <td><span class="key">T4</span></td>
+          <td><span class="label-text">Kunder</span></td>
+          <td><span class="icon-chip">👥 Users</span></td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#06B6D4"></span>#06B6D4</span></td>
+          <td><span class="key">10-12</span></td>
+          <td><div class="checkbox-toggle"></div></td>
+          <td><div class="row-actions"><button>▲</button><button>▼</button><button>⧉</button><button class="delete">✕</button></div></td>
+        </tr>
+        <tr>
+          <td><span class="key">T5</span></td>
+          <td><span class="label-text">Marketing</span></td>
+          <td><span class="icon-chip">📅 Calendar</span></td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#EC4899"></span>#EC4899</span></td>
+          <td><span class="key">12-14</span></td>
+          <td><div class="checkbox-toggle"></div></td>
+          <td><div class="row-actions"><button>▲</button><button>▼</button><button>⧉</button><button class="delete">✕</button></div></td>
+        </tr>
+        <tr>
+          <td><span class="key">T6</span></td>
+          <td><span class="label-text">Salg</span></td>
+          <td><span class="icon-chip">⚡ Activity</span></td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#3B82F6"></span>#3B82F6</span></td>
+          <td><span class="key">12-14</span></td>
+          <td><div class="checkbox-toggle"></div></td>
+          <td><div class="row-actions"><button>▲</button><button>▼</button><button>⧉</button><button class="delete">✕</button></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="action-row">
+    <button class="btn-add">+ Legg til rad</button>
+    <button class="btn-add">+ Legg til felt</button>
+    <button class="btn primary" style="margin-left: auto;">↓ Last ned JSON</button>
+    <button class="btn">⎘ Kopier til clipboard</button>
+  </div>
+</div>
+
+<div class="footerbar">
+  <span><strong style="color: var(--text)">KoDo</strong> · meetmax.json</span>
+  <span class="ok">lastet</span>
+  <span class="dirty">2 endringer</span>
+  <span>UTF-8</span>
+  <span>JSON · 195 linjer · 4.8 KB</span>
+  <span class="right"><kbd>⌘</kbd><kbd>S</kbd> eksport · <kbd>⌘</kbd><kbd>K</kbd> palette · <kbd>⌘</kbd><kbd>Z</kbd> angre</span>
+</div>
+</body>
+</html>

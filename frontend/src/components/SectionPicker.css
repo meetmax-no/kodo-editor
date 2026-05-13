@@ -1,0 +1,116 @@
+/* SectionPicker — V5.0 dark theme */
+
+.sp-wrapper { margin: 0 0 16px; }
+
+.sp-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.sp-header-title {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint, rgba(255, 255, 255, 0.5));
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.sp-header-count {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent, #FBBF24);
+  background: var(--accent-soft, rgba(251, 191, 36, 0.14));
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+
+.sp-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  background: var(--glass, rgba(255, 255, 255, 0.04));
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
+}
+
+.sp-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-soft, rgba(255, 255, 255, 0.65));
+  cursor: pointer;
+  transition: all 140ms ease;
+  white-space: nowrap;
+}
+
+.sp-tab:hover {
+  background: var(--glass-strong, rgba(255, 255, 255, 0.07));
+  color: var(--text, rgba(255, 255, 255, 0.96));
+}
+
+.sp-tab.active {
+  background: var(--accent-soft, rgba(251, 191, 36, 0.14));
+  color: var(--accent, #FBBF24);
+  border-color: rgba(251, 191, 36, 0.25);
+}
+
+.sp-tab-icon {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 13px;
+  color: var(--text-faint, rgba(255, 255, 255, 0.5));
+  line-height: 1;
+}
+
+.sp-tab.active .sp-tab-icon { color: var(--accent, #FBBF24); }
+
+.sp-tab-label {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.sp-tab-count {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-faint, rgba(255, 255, 255, 0.5));
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sp-tab.active .sp-tab-count {
+  background: rgba(251, 191, 36, 0.20);
+  color: var(--accent, #FBBF24);
+}
+
+.sp-tab-dirty {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent, #FBBF24);
+  box-shadow: 0 0 8px var(--accent-glow, rgba(251, 191, 36, 0.4));
+  animation: sp-pulse 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes sp-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}

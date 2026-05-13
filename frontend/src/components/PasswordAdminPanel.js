@@ -1,0 +1,260 @@
+import React, { useState } from 'react';
+import bcrypt from 'bcryptjs';
+import toast from 'react-hot-toast';
+
+/**
+ * PasswordAdminPanel — innebygd hash-generator + hash-tester.
+ *
+ * Synlig kun når REACT_APP_SHOW_ADMIN_TOOLS=true.
+ *
+ * Sikkerhet:
+ *  - Hash genereres LOKALT i nettleseren via bcryptjs (cost 12)
+ *  - Passordet sendes ALDRI til server
+ *  - Resultat ligger kun i komponentens state, ikke i localStorage
+ */
+export default function PasswordAdminPanel() {
+  const enabled = process.env.REACT_APP_SHOW_ADMIN_TOOLS === 'true';
+  if (!enabled) return null;
+
+  return (
+    <section className="settings-section" data-testid="password-admin-panel">
+      <h3 className="settings-section-title">Passord-administrasjon</h3>
+      <p className="settings-meta-hint">
+        Generer eller test bcrypt-hash for Vercel ENV-variabelen{' '}
+        <code>AUTH_PASSWORD_HASH</code>. Passordet forlater aldri nettleseren.
+      </p>
+
+      <HashGenerator />
+      <HashTester />
+    </section>
+  );
+}
+
+function HashGenerator() {
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [hash, setHash] = useState('');
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleGenerate = async () => {
+    setError(null);
+    setHash('');
+    if (!password) {
+      setError('Skriv inn et passord');
+      return;
+    }
+    if (password !== confirm) {
+      setError('Passordene matcher ikke');
+      return;
+    }
+    setWorking(true);
+    try {
+      // Cost 12 ≈ 200-400ms i browser — gir spinner-følelse
+      const result = await bcrypt.hash(password, 12);
+      setHash(result);
+      // Tøm passord-feltene så de ikke henger igjen
+      setPassword('');
+      setConfirm('');
+    } catch (err) {
+      setError('Kunne ikke generere hash: ' + err.message);
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(hash);
+      toast.success('Hash kopiert til clipboard');
+    } catch {
+      toast.error('Kunne ikke kopiere — marker og kopier manuelt');
+    }
+  };
+
+  return (
+    <div className="pwd-block" data-testid="hash-generator">
+      <h4 className="pwd-subtitle">🔐 Generer ny hash</h4>
+
+      <PasswordField
+        label="Nytt passord"
+        value={password}
+        onChange={setPassword}
+        show={showPw}
+        onToggle={() => setShowPw((v) => !v)}
+        testId="hashgen-password-input"
+        autoFocus
+      />
+      <PasswordField
+        label="Bekreft passord"
+        value={confirm}
+        onChange={setConfirm}
+        show={showConfirm}
+        onToggle={() => setShowConfirm((v) => !v)}
+        testId="hashgen-confirm-input"
+      />
+
+      {error && (
+        <div className="pwd-error" data-testid="hashgen-error">{error}</div>
+      )}
+
+      <button
+        type="button"
+        className="pwd-btn pwd-btn-primary"
+        onClick={handleGenerate}
+        disabled={working || !password || !confirm}
+        data-testid="hashgen-generate-btn"
+      >
+        {working ? 'Genererer hash…' : 'Generer hash'}
+      </button>
+
+      {hash && (
+        <div className="pwd-result" data-testid="hashgen-result">
+          <div className="pwd-result-label">
+            Hash (lim inn som <code>AUTH_PASSWORD_HASH</code> i Vercel):
+          </div>
+          <textarea
+            className="pwd-result-text"
+            readOnly
+            value={hash}
+            rows={2}
+            onFocus={(e) => e.target.select()}
+            data-testid="hashgen-result-text"
+          />
+          <div className="pwd-actions-row">
+            <button
+              type="button"
+              className="pwd-btn pwd-btn-secondary"
+              onClick={handleCopy}
+              data-testid="hashgen-copy-btn"
+            >
+              📋 Kopier hash
+            </button>
+          </div>
+          <div className="pwd-warning" data-testid="hashgen-warning">
+            ⚠️ Lukk dette vinduet når du er ferdig. Hashen ligger ikke noe annet sted.
+          </div>
+          <ol className="pwd-steps">
+            <li>Åpne Vercel Dashboard → Project → Settings → Environment Variables</li>
+            <li>Erstatt verdien for <code>AUTH_PASSWORD_HASH</code> med hashen over</li>
+            <li>Klikk <strong>Save</strong> → gå til Deployments → klikk … på siste deploy → <strong>Redeploy</strong></li>
+            <li>Vent ~90 sek til ny build er live</li>
+            <li>Send det nye passordet til kunde via sikker kanal</li>
+          </ol>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HashTester() {
+  const [testHash, setTestHash] = useState('');
+  const [testPwd, setTestPwd] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [result, setResult] = useState(null); // null | 'match' | 'nomatch' | 'error'
+  const [working, setWorking] = useState(false);
+
+  const handleTest = async () => {
+    setResult(null);
+    if (!testHash || !testPwd) {
+      setResult('error');
+      return;
+    }
+    setWorking(true);
+    try {
+      const ok = await bcrypt.compare(testPwd, testHash.trim());
+      setResult(ok ? 'match' : 'nomatch');
+    } catch {
+      setResult('error');
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  return (
+    <div className="pwd-block" data-testid="hash-tester" style={{ marginTop: 18 }}>
+      <h4 className="pwd-subtitle">🧪 Test eksisterende hash</h4>
+      <p className="pwd-hint">
+        Lim inn en hash + et passord for å verifisere at de matcher.
+      </p>
+
+      <label className="pwd-label">Hash</label>
+      <textarea
+        className="pwd-input pwd-input-mono"
+        value={testHash}
+        onChange={(e) => setTestHash(e.target.value)}
+        placeholder="$2b$12$..."
+        rows={2}
+        data-testid="hashtest-hash-input"
+        autoComplete="off"
+      />
+
+      <PasswordField
+        label="Passord å teste"
+        value={testPwd}
+        onChange={setTestPwd}
+        show={showPw}
+        onToggle={() => setShowPw((v) => !v)}
+        testId="hashtest-password-input"
+      />
+
+      <button
+        type="button"
+        className="pwd-btn pwd-btn-primary"
+        onClick={handleTest}
+        disabled={working || !testHash || !testPwd}
+        data-testid="hashtest-run-btn"
+      >
+        {working ? 'Tester…' : 'Test match'}
+      </button>
+
+      {result === 'match' && (
+        <div className="pwd-result-match" data-testid="hashtest-result-match">
+          ✅ Match — passordet matcher hashen
+        </div>
+      )}
+      {result === 'nomatch' && (
+        <div className="pwd-result-nomatch" data-testid="hashtest-result-nomatch">
+          ❌ Ingen match — passordet matcher ikke hashen
+        </div>
+      )}
+      {result === 'error' && (
+        <div className="pwd-error" data-testid="hashtest-result-error">
+          Hash er ugyldig eller mangler felt
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PasswordField({ label, value, onChange, show, onToggle, testId, autoFocus }) {
+  return (
+    <>
+      <label className="pwd-label">{label}</label>
+      <div className="pwd-input-wrap">
+        <input
+          className="pwd-input"
+          type={show ? 'text' : 'password'}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          autoFocus={autoFocus}
+          autoComplete="new-password"
+          data-testid={testId}
+        />
+        <button
+          type="button"
+          className="pwd-eye"
+          onClick={onToggle}
+          tabIndex={-1}
+          aria-label={show ? 'Skjul passord' : 'Vis passord'}
+          title={show ? 'Skjul' : 'Vis'}
+          data-testid={`${testId}-eye`}
+        >
+          {show ? '🙈' : '👁'}
+        </button>
+      </div>
+    </>
+  );
+}

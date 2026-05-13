@@ -1,0 +1,156 @@
+/* RootPrimitivesPanel — V5.0 dark theme */
+
+.rpp-wrapper {
+  margin: 0 0 20px;
+  padding: 18px 20px;
+  background: var(--glass, rgba(255, 255, 255, 0.04));
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
+  border-radius: 14px;
+}
+
+.rpp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.rpp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rpp-label {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint, rgba(255, 255, 255, 0.5));
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.rpp-input {
+  padding: 8px 12px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text, rgba(255, 255, 255, 0.96));
+  background: rgba(255, 255, 255, 0.03);
+  font-family: inherit;
+  transition: all 140ms ease;
+  outline: none;
+}
+
+.rpp-input:focus {
+  border-color: var(--accent, #FBBF24);
+  box-shadow: 0 0 0 3px var(--accent-glow, rgba(251, 191, 36, 0.20));
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.rpp-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent, #FBBF24);
+  cursor: pointer;
+}
+
+.rpp-input.edited {
+  background: var(--warn-soft, rgba(251, 191, 36, 0.18));
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #FCD34D;
+}
+
+.rpp-input.edited:focus {
+  border-color: #F59E0B;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+}
+
+.rpp-checkbox.edited {
+  outline: 2px solid var(--accent, #FBBF24);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Array-of-primitives som rot-felt */
+.rpp-field-array {
+  grid-column: span 2;
+}
+
+.rpp-meta {
+  font-weight: 400;
+  color: var(--text-faint, rgba(255, 255, 255, 0.5));
+  font-size: 10px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.rpp-array-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text, rgba(255, 255, 255, 0.96));
+  cursor: pointer;
+  transition: all 140ms ease;
+  text-align: left;
+  width: 100%;
+}
+
+.rpp-array-btn:hover {
+  border-color: var(--accent, #FBBF24);
+  background: var(--accent-soft, rgba(251, 191, 36, 0.14));
+}
+
+.rpp-array-btn.edited {
+  background: var(--warn-soft, rgba(251, 191, 36, 0.18));
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+.rpp-array-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.rpp-array-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--text-soft, rgba(255, 255, 255, 0.65));
+  font-family: var(--mono, ui-monospace, monospace);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rpp-array-more {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--text-faint, rgba(255, 255, 255, 0.5));
+  font-weight: 600;
+}
+
+.rpp-array-edit {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--accent, #FBBF24);
+  font-weight: 500;
+  white-space: nowrap;
+}

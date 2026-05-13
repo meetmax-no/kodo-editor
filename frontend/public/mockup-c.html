@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<title>Mockup C — Brutalist · KoDo Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FAFAF7;
+    --ink: #0A0A0A;
+    --ink-soft: #1F1F1F;
+    --line: #0A0A0A;
+    --accent: #FF2D87;          /* hot pink — nikker til viskelæret i favicon */
+    --accent-2: #CCFF00;         /* giftgrønn for dirty-state */
+    --warn-bg: #FFFCE8;
+    --display: 'Bricolage Grotesque', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--display);
+    font-size: 14px;
+    line-height: 1.4;
+    min-height: 100vh;
+    background-image:
+      linear-gradient(var(--ink) 1px, transparent 1px),
+      linear-gradient(90deg, var(--ink) 1px, transparent 1px);
+    background-size: 80px 80px;
+    background-position: -1px -1px;
+    background-attachment: fixed;
+    background-color: var(--paper);
+    background-blend-mode: normal;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: var(--paper);
+    opacity: 0.97;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .shell { max-width: 1720px; margin: 0 auto; padding: 32px 28px 80px; }
+
+  /* Header */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    padding: 18px 24px;
+    box-shadow: 6px 6px 0 var(--ink);
+    margin-bottom: 28px;
+  }
+  .brand {
+    display: flex; align-items: baseline; gap: 14px;
+  }
+  .brand-mark {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 32px;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .brand-mark em {
+    font-style: normal;
+    background: var(--ink);
+    color: var(--accent);
+    padding: 0 8px;
+    margin-left: -2px;
+  }
+  .brand-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--ink);
+    padding-left: 14px;
+  }
+  .topbar-right { display: flex; gap: 10px; align-items: center; }
+
+  /* Buttons */
+  .btn {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 10px 16px;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 80ms ease, box-shadow 80ms ease;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .btn:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--ink); }
+  .btn:active { transform: translate(0, 0); box-shadow: 0 0 0 var(--ink); }
+  .btn.primary { background: var(--ink); color: var(--paper); }
+  .btn.primary:hover { box-shadow: 4px 4px 0 var(--accent); }
+  .btn.accent { background: var(--accent); color: var(--ink); border-color: var(--ink); }
+  .btn.icon-only { padding: 8px 10px; min-width: 36px; }
+
+  /* Load section */
+  .load-block {
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    padding: 22px;
+    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .load-block-col h3 {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    margin-bottom: 10px;
+    color: var(--ink-soft);
+  }
+  .url-row {
+    display: flex;
+    gap: 0;
+    border: 2px solid var(--ink);
+  }
+  .url-prompt {
+    background: var(--ink);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-weight: 700;
+    padding: 12px 14px;
+    align-self: stretch;
+    display: flex; align-items: center;
+  }
+  .url-input {
+    flex: 1;
+    border: none;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--paper);
+    outline: none;
+    border-right: 2px solid var(--ink);
+  }
+  .url-input:focus { background: var(--warn-bg); }
+  .preset-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 10px;
+    border: 1.5px solid var(--ink);
+    cursor: pointer;
+    background: var(--paper);
+  }
+  .pill.active { background: var(--ink); color: var(--paper); }
+
+  /* Section tabs */
+  .sections {
+    display: flex;
+    gap: 0;
+    margin-bottom: 28px;
+    overflow-x: auto;
+  }
+  .section-tab {
+    font-family: var(--display);
+    font-weight: 600;
+    padding: 14px 20px;
+    border: 2px solid var(--ink);
+    border-right: 0;
+    background: var(--paper);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 12px;
+    white-space: nowrap;
+    position: relative;
+  }
+  .section-tab:last-child { border-right: 2px solid var(--ink); }
+  .section-tab.active { background: var(--ink); color: var(--paper); }
+  .section-tab .count {
+    font-family: var(--mono);
+    font-size: 10px;
+    background: var(--paper);
+    color: var(--ink);
+    padding: 1px 6px;
+    border: 1.5px solid var(--ink);
+  }
+  .section-tab.active .count { background: var(--accent); border-color: var(--accent); }
+  .section-tab .dirty {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 8px; height: 8px;
+    background: var(--accent-2);
+    border: 1.5px solid var(--ink);
+  }
+
+  /* Status bar */
+  .statusbar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 24px;
+    border: 2px solid var(--ink);
+  }
+  .statusbar > * {
+    padding: 10px 16px;
+    border-right: 2px solid var(--ink);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .statusbar > *:last-child { border-right: 0; }
+  .status-dot { display: inline-block; width: 8px; height: 8px; background: var(--accent-2); margin-right: 8px; }
+  .status-dirty { background: var(--warn-bg); }
+
+  /* Table */
+  .table-card {
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    margin-bottom: 24px;
+  }
+  .table-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 2px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .table-head h2 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+  }
+  .table-head .count-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--accent);
+    color: var(--ink);
+    padding: 3px 10px;
+    margin-left: 10px;
+  }
+  .search-bar {
+    display: flex;
+    align-items: center;
+    border: 2px solid var(--paper);
+    background: var(--ink);
+  }
+  .search-bar input {
+    border: 0;
+    background: transparent;
+    color: var(--paper);
+    padding: 6px 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    width: 240px;
+    outline: none;
+  }
+  .search-bar input::placeholder { color: rgba(255,255,255,0.5); }
+
+  table { width: 100%; border-collapse: collapse; font-family: var(--mono); }
+  th, td { padding: 11px 16px; text-align: left; border-bottom: 1px solid var(--ink); font-size: 13px; }
+  th {
+    background: var(--paper);
+    font-family: var(--display);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+    font-weight: 700;
+    border-bottom: 2px solid var(--ink);
+  }
+  tbody tr:hover { background: var(--warn-bg); }
+  tbody tr:last-child td { border-bottom: 0; }
+
+  .color-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px 4px 4px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .color-chip-box { width: 18px; height: 18px; border: 1.5px solid var(--ink); }
+
+  .row-actions { display: inline-flex; gap: 4px; }
+  .row-actions button {
+    width: 26px; height: 26px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .row-actions button:hover { background: var(--ink); color: var(--paper); }
+
+  .edited-row td { background: var(--warn-bg) !important; }
+  .edited-cell {
+    background: var(--accent-2);
+    box-shadow: inset 0 0 0 2px var(--ink);
+  }
+  .edited-marker {
+    display: inline-block;
+    width: 4px; height: 18px;
+    background: var(--accent);
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  /* Footer status bar */
+  .footerbar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    padding: 6px 20px;
+    gap: 0;
+    border-top: 2px solid var(--ink);
+    z-index: 100;
+  }
+  .footerbar > * { padding: 0 14px; border-right: 1px solid rgba(255,255,255,0.2); }
+  .footerbar > *:last-child { border-right: 0; margin-left: auto; }
+  .footerbar .pill-ok { color: var(--accent-2); }
+  .footerbar .pill-dirty { color: var(--accent); }
+
+  .badge-mark {
+    background: var(--accent);
+    color: var(--ink);
+    padding: 2px 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* Mockup label */
+  .mockup-label {
+    position: fixed;
+    top: 16px; right: 16px;
+    background: var(--accent);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    border: 2px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    z-index: 200;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+<div class="mockup-label">MOCKUP C · BRUTALIST</div>
+
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">Ko<em>Do</em><span style="color:var(--accent)">.</span></div>
+      <div class="brand-tag">Universal JSON Editor · v4.1</div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn icon-only" title="Cmd+K">⌘K</button>
+      <button class="btn">↶ Angre</button>
+      <button class="btn">↷ Gjenopprett</button>
+      <button class="btn accent">✨ Ny JSON</button>
+    </div>
+  </div>
+
+  <div class="load-block">
+    <div class="load-block-col">
+      <h3>Last fra URL</h3>
+      <div class="url-row">
+        <span class="url-prompt">$</span>
+        <input class="url-input" value="https://raw.githubusercontent.com/meetmax-no/Calender/refs/heads/main/public/clients/meetmax.json">
+        <button class="btn primary" style="border:0; padding: 12px 20px;">Last inn →</button>
+      </div>
+    </div>
+    <div class="load-block-col">
+      <h3>Forhåndslagrede</h3>
+      <div class="preset-pills">
+        <span class="pill">Priser</span>
+        <span class="pill">Tjenester</span>
+        <span class="pill">Åpningstider</span>
+        <span class="pill active">ToDo · Me &amp; Max</span>
+        <span class="pill">ToDo · Default</span>
+        <span class="pill">KoDo Vault</span>
+        <span class="pill">Custom URL</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sections">
+    <div class="section-tab">▪ Rot-felter <span class="count">6</span></div>
+    <div class="section-tab">⇄ _meta <span class="count">4</span></div>
+    <div class="section-tab active">⊞ taskTypes <span class="count">7</span><span class="dirty"></span></div>
+    <div class="section-tab">▤ palette <span class="count">10</span></div>
+    <div class="section-tab">⇄ holidays <span class="count">25</span></div>
+    <div class="section-tab">⇄ commercialDays <span class="count">11</span></div>
+    <div class="section-tab">▤ backgrounds <span class="count">9</span></div>
+  </div>
+
+  <div class="statusbar">
+    <div><span class="status-dot"></span>DATA LASTET</div>
+    <div>SEKSJONER: <strong>7</strong></div>
+    <div>RADER: <strong>7</strong></div>
+    <div class="status-dirty"><strong style="color:var(--ink)">●</strong>&nbsp; 2 ULAGREDE ENDRINGER</div>
+    <div style="margin-left:auto;"><span class="badge-mark">↑ 3 STEG</span></div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-head">
+      <h2>taskTypes <span class="count-badge">7 ITEMS</span></h2>
+      <div class="search-bar">
+        <input type="text" placeholder="// søk i alle felter…">
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Nøkkel</th>
+          <th>Label</th>
+          <th>Icon</th>
+          <th>Color</th>
+          <th>DefaultSlot</th>
+          <th>Active</th>
+          <th style="width:140px">Aksjon</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="edited-row">
+          <td><span class="edited-marker"></span>T1</td>
+          <td><span class="edited-cell" style="padding:2px 6px;">AnnetXX</span></td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#A855F7"></span>Sparkles</span></td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#A855F7"></span>#A855F7</span></td>
+          <td>08-10</td>
+          <td>☑</td>
+          <td><div class="row-actions"><button>▲</button><button>▼</button><button>⧉</button><button>×</button></div></td>
+        </tr>
+        <tr>
+          <td>T2</td>
+          <td>Drift &amp; Økonomi</td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#FF0000"></span>Globe</span></td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#FF0000"></span>#FF0000</span></td>
+          <td>08-10</td>
+          <td>☑</td>
+          <td><div class="row-actions"><button>▲</button><button>▼</button><button>⧉</button><button>×</button></div></td>
+        </tr>
+        <tr>
+          <td>T3</td>
+          <td>Forretningsutvikling</td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#FFD700"></span>Sparkles</span></td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#FFD700"></span>#FFD700</span></td>
+          <td>10-12</td>
+          <td>☑</td>
+          <td><div class="row-actions"><button>▲</button><button>▼</button><button>⧉</button><button>×</button></div></td>
+        </tr>
+        <tr>
+          <td>T4</td>
+          <td>Kunder</td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#06B6D4"></span>Users</span></td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#06B6D4"></span>#06B6D4</span></td>
+          <td>10-12</td>
+          <td>☑</td>
+          <td><div class="row-actions"><button>▲</button><button>▼</button><button>⧉</button><button>×</button></div></td>
+        </tr>
+        <tr>
+          <td>T5</td>
+          <td>Marketing</td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#EC4899"></span>Calendar</span></td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#EC4899"></span>#EC4899</span></td>
+          <td>12-14</td>
+          <td>☑</td>
+          <td><div class="row-actions"><button>▲</button><button>▼</button><button>⧉</button><button>×</button></div></td>
+        </tr>
+        <tr>
+          <td>T6</td>
+          <td>Salg</td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#3B82F6"></span>Activity</span></td>
+          <td><span class="color-chip"><span class="color-chip-box" style="background:#3B82F6"></span>#3B82F6</span></td>
+          <td>12-14</td>
+          <td>☑</td>
+          <td><div class="row-actions"><button>▲</button><button>▼</button><button>⧉</button><button>×</button></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="display:flex; gap:0; margin-bottom:24px;">
+    <button class="btn">+ LEGG TIL RAD</button>
+    <button class="btn" style="margin-left:-2px;">+ LEGG TIL FELT</button>
+    <button class="btn primary" style="margin-left:auto;">↓ LAST NED JSON</button>
+    <button class="btn" style="margin-left:-2px;">⎘ KOPIER</button>
+  </div>
+</div>
+
+<div class="footerbar">
+  <span><strong style="color:var(--accent)">KoDo</strong> · meetmax.json</span>
+  <span class="pill-ok">● lastet</span>
+  <span class="pill-dirty">● 2 endringer</span>
+  <span>UTF-8</span>
+  <span>JSON</span>
+  <span>L 195 / 4.8KB</span>
+  <span>Cmd+S → eksport · Cmd+K → palette</span>
+</div>
+</body>
+</html>
