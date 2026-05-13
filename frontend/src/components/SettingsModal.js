@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ROTATE_MODES, ROTATE_LABELS } from '../themes';
+import { ROTATE_MODES, ROTATE_LABELS, THEMES } from '../themes';
 import PasswordAdminPanel from './PasswordAdminPanel';
 import './SettingsModal.css';
 
@@ -19,6 +19,8 @@ export default function SettingsModal({
   onChangeBackground,
   onChangeRotate,
   onChangeOverlay,
+  themeId,
+  onChangeTheme,
 }) {
   const [tab, setTab] = useState('general');
 
@@ -92,6 +94,28 @@ export default function SettingsModal({
                   </div>
                 )}
               </dl>
+            </section>
+
+            <section className="settings-section">
+              <h3 className="settings-section-title">Tema</h3>
+              <div className="settings-row">
+                <label className="settings-label">Velg tema</label>
+                <div className="theme-group" data-testid="theme-group">
+                  {THEMES.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className={`theme-pill ${themeId === t.id ? 'active' : ''}`}
+                      onClick={() => onChangeTheme && onChangeTheme(t.id)}
+                      data-testid={`theme-pill-${t.id}`}
+                      title={`${t.name} (${t.tone === 'light' ? 'lys' : 'mørk'})`}
+                    >
+                      <span className="theme-swatch" style={{ background: t.accent }} aria-hidden="true" />
+                      <span className="theme-pill-label">{t.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </section>
 
             <section className="settings-section">

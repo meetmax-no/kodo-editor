@@ -20,6 +20,7 @@ import CustomUrlModal from './components/CustomUrlModal';
 import PresetDropdown from './components/PresetDropdown';
 import GithubPushModal from './components/GithubPushModal';
 import useBackground from './hooks/useBackground';
+import useTheme from './hooks/useTheme';
 import { parseGithubRawUrl } from './hooks/useGithubSource';
 import { useConfirm } from './components/ConfirmModal';
 import CategoryMenu from './components/CategoryMenu';
@@ -34,24 +35,6 @@ import {
   dictPrimitivesToRows,
   rowsToDictPrimitives,
 } from './utils/sectionDetector';
-
-// Litt moro: en samling undertitler som roteres tilfeldig ved hver side-lasting
-const SUBTITLES = [
-  'Built with love and care — uten trailing commas',
-  'Ingen JSON ble skadet under redigering',
-  'Fordi manuell JSON-redigering er så 2004',
-  'Din JSON, din struktur, null drama',
-  'Hvor {"key": "value"} blir til poesi',
-  'For deg som frykter Notepad og Vim',
-  'Struktur bevart, sjelefred inkludert',
-  '"Det virker på maskinen min" — nå på din også',
-  'Laget i Norge, sponset av koffein',
-  'Push med selvtillit, sov godt om natten',
-  'Null backend, null database, null bekymringer',
-  'Én editor for å redigere dem alle',
-];
-
-const randomSubtitle = () => SUBTITLES[Math.floor(Math.random() * SUBTITLES.length)];
 
 // Mock data kun for demo ved oppstart
 const MOCK_CATEGORIES = ["Demo"];
@@ -81,15 +64,21 @@ function App({ auth }) {
   // loadedJsonData refereres senere — vi sender inn jsonStructure?.originalData når det er klart
   const [loadedRootData, setLoadedRootData] = useState(null);
   const bg = useBackground(loadedRootData);
+  const themeCtx = useTheme();
 
-  // V5.0: appliser bakgrunn + tone på <html> via CSS-variabler
+  // V5.0: appliser bakgrunn på <html> via CSS-variabler.
+  //       (Tone styres nå av useTheme — bakgrunnens tone ignoreres.)
   useEffect(() => {
     if (!bg.activeBackground) return;
     document.body.style.setProperty('--app-bg', bg.activeCss);
     document.body.style.setProperty('--app-overlay', String(bg.overlay));
-    const root = document.documentElement;
-    root.classList.toggle('tone-light', bg.tone === 'light');
-  }, [bg.activeCss, bg.overlay, bg.tone, bg.activeBackground]);
+  }, [bg.activeCss, bg.overlay, bg.activeBackground]);
+
+  // Sett nettleser-tab-tittel dynamisk fra clients/<x>.json _meta.client
+  useEffect(() => {
+    const client = bg.config?._meta?.client;
+    if (client) document.title = `${client} — Innholdsredigering`;
+  }, [bg.config]);
 
   const [selectedCategoryIndex, setSelectedCategoryIndex] = useState(0);
   const [packages, setPackages] = useState(MOCK_PACKAGES);
@@ -121,8 +110,6 @@ function App({ auth }) {
   const [addFieldModalOpen, setAddFieldModalOpen] = useState(false);
   // Undo: stack av snapshots. Hver snapshot er {packages, rootPrimitives, jsonStructure, dirtyFields}
   const [undoStack, setUndoStack] = useState([]);
-  // Velg en tilfeldig undertittel ved mount (ikke re-generer ved hver render)
-  const [subtitle] = useState(() => randomSubtitle());
   const [editingField, setEditingField] = useState({ source: 'package', packageId: null, fieldName: null, value: null, wrapperKey: null });
 
   // V4.1: search/filter for hovedtabellen
@@ -1460,10 +1447,9 @@ function App({ auth }) {
         <div className="editor-card">
         <div className="editor-header">
           <div>
-            <h1 className="title" data-testid="app-title">Universal JSON Editor</h1>
-            <div className="subtitle" data-testid="app-subtitle" title="Oppdater siden for en ny setning">
-              {subtitle}
-            </div>
+            <h1 className="title" data-testid="app-title">
+              {bg.config?._meta?.client || 'Ko | Do Consult'} — Innholdsredigering
+            </h1>
           </div>
         </div>
 
@@ -1945,6 +1931,8 @@ function App({ auth }) {
         onChangeBackground={bg.setBackgroundId}
         onChangeRotate={bg.setRotateMode}
         onChangeOverlay={bg.setOverlay}
+        themeId={themeCtx.themeId}
+        onChangeTheme={themeCtx.setThemeId}
       />
 
       <CommandPalette

@@ -3,6 +3,20 @@
 
 export const APP_VERSION = 'v6.0';
 
+// ── Tema: hardkodet liste. Settes via Innstillinger og persisterer i localStorage.
+//        Uavhengig av bakgrunn — bakgrunn styrer bakgrunns-bilde/gradient,
+//        tema styrer panel-tone (lys/mørk) og accent-farge.
+export const THEMES = [
+  { id: 'dark',   name: 'Mørk',    tone: 'dark',  accent: '#FBBF24', accentSoft: 'rgba(251, 191, 36, 0.14)',  accentGlow: 'rgba(251, 191, 36, 0.40)' },
+  { id: 'light',  name: 'Lys',     tone: 'light', accent: '#F59E0B', accentSoft: 'rgba(245, 158, 11, 0.18)',  accentGlow: 'rgba(245, 158, 11, 0.35)' },
+  { id: 'blue',   name: 'Blå',     tone: 'dark',  accent: '#60A5FA', accentSoft: 'rgba(96, 165, 250, 0.16)',  accentGlow: 'rgba(96, 165, 250, 0.40)' },
+  { id: 'orange', name: 'Oransje', tone: 'dark',  accent: '#FB923C', accentSoft: 'rgba(251, 146, 60, 0.16)',  accentGlow: 'rgba(251, 146, 60, 0.40)' },
+];
+export const DEFAULT_THEME_ID = 'dark';
+export function getTheme(id) {
+  return THEMES.find((t) => t.id === id) || THEMES.find((t) => t.id === DEFAULT_THEME_ID);
+}
+
 export const ROTATE_MODES = {
   STATIC: 'static',
   SESSION: 'session',

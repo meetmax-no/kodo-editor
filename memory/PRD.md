@@ -194,5 +194,8 @@ Se `/app/frontend/DEPLOYMENT.md` for komplett Vercel-setup (Root Directory=`fron
   - Setter `isDirty=true` på alle mutasjoner
   - Synlig kun når `jsonStructure.hasCategories` (multi-section JSON med `kategori`-felt)
 - ✅ **Fikset tabell-overskrift**: Tidligere hardkodet til "Pakker i ..." — nå bruker faktisk `itemsKey` fra JSON (f.eks. "Tjenester i ..." for tannlege-per).
+- ✅ **CategoryMenu visuell tilpasning**: trigger-knapp og popover speiler nå `PresetDropdown`-stilen (samme høyde, border-radius, glass-bakgrunn, accent-glow ved fokus). Ikoner beholdt i menyvalgene.
+- ✅ **H1 + browser-tittel dynamisk fra `_meta.client`**: Hardkodet `"Universal JSON Editor"` + tilfeldig undertittel fjernet. Erstattet med `"{_meta.client} — Innholdsredigering"`. Browser-tab-tittel settes via `useEffect` når config lastes. SUBTITLES-array og `randomSubtitle` slettet.
+- ✅ **Tema-velger (hardkodet)**: Ny `useTheme`-hook + `THEMES`-konstant i `themes.js`. Fire valg: Mørk (amber), Lys (amber), Blå, Oransje. Hver setter `--accent`-CSS-vars via `.theme-<id>`-klasse på `<html>`, og `.tone-light` styres nå av tema (overstyrer bakgrunnens tone). Persisterer i `localStorage` (`kodo-editor-theme-v1`). Ny "Tema"-seksjon over "Bakgrunn" i Innstillinger med fargepriklere.
 
 
