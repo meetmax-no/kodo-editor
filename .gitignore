@@ -196,3 +196,6 @@ credentials.json
 *.pem
 *.key
 .credentials
+
+# Lokale hjelpefiler for å overføre til andre repos — ikke push til kodo-editor
+tannlege-per-files/
