@@ -3,33 +3,34 @@ import './Login.css';
 
 /**
  * Login — branded login-skjerm for KoDo Editor.
- * Leser branding fra /clients/default.json (samme som useBackground).
+ *
+ * Bakgrunnen kommer fra <body> (satt av AuthGate via useBackground).
+ * Login-kortet bruker samme glass-stil som resten av appen (var(--glass-strong)).
+ *
+ * @param {object} brand   – { name, tagline, logo? } fra clients/default.json (AuthGate)
  */
-export default function Login({ onLogin, error }) {
+export default function Login({ onLogin, error, brand: brandProp }) {
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [brand, setBrand] = useState({ name: 'KoDo Editor', tagline: 'Universal JSON Editor' });
   const [localError, setLocalError] = useState(null);
+  // Fallback: hvis AuthGate ikke har lastet config enda, hent selv (samme kilde).
+  const [fallbackBrand, setFallbackBrand] = useState(null);
 
-  // Last branding fra clients/default.json (samme kilde som resten av appen)
   useEffect(() => {
+    if (brandProp) return;
     fetch('/clients/default.json', { cache: 'no-store' })
       .then((r) => r.json())
-      .then((cfg) => {
-        if (cfg?.brand) {
-          setBrand({
-            name: cfg.brand.name || 'KoDo Editor',
-            tagline: cfg.brand.tagline || 'Universal JSON Editor',
-            logo: cfg.brand.logo,
-          });
-        }
-      })
-      .catch(() => { /* ignorér — bruk default branding */ });
-  }, []);
+      .then((cfg) => cfg?.brand && setFallbackBrand(cfg.brand))
+      .catch(() => {});
+  }, [brandProp]);
 
-  // Vis feilmelding fra parent (server-side error) eller lokal validering
+  const brand = brandProp || fallbackBrand || {
+    name: 'KoDo Editor',
+    tagline: 'Universal JSON Editor',
+  };
+
   const displayedError = localError || error;
 
   const handleSubmit = async (e) => {
@@ -43,17 +44,12 @@ export default function Login({ onLogin, error }) {
     const ok = await onLogin(password, remember);
     setSubmitting(false);
     if (!ok) {
-      setPassword(''); // tøm feltet etter feil
+      setPassword('');
     }
   };
 
   return (
     <div className="login-shell" data-testid="login-screen">
-      <div className="login-bg" aria-hidden="true">
-        <div className="login-bg-glow" />
-        <div className="login-bg-grain" />
-      </div>
-
       <div className="login-card-wrap">
         <form
           className="login-card"
@@ -66,7 +62,7 @@ export default function Login({ onLogin, error }) {
               <div className="login-logo">Ko</div>
               <div className="login-brand-text">
                 <span className="login-brand-name">KoDo Editor</span>
-                <span className="login-brand-customer">{brand.name}</span>
+                <span className="login-brand-customer">{brand.name || 'Universal JSON Editor'}</span>
               </div>
             </div>
           </header>
@@ -127,7 +123,7 @@ export default function Login({ onLogin, error }) {
           </div>
 
           <footer className="login-footer">
-            <span className="login-tagline">{brand.tagline}</span>
+            <span className="login-tagline">{brand.tagline || 'Universal JSON Editor'}</span>
           </footer>
         </form>
       </div>
