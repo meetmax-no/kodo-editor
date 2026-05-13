@@ -180,6 +180,19 @@ Se `/app/frontend/DEPLOYMENT.md` for komplett Vercel-setup (Root Directory=`fron
 - ✅ **Fikset Vercel deploy-error (runde 2)**: `{"type":"module"}` i `api/package.json` + `.js`-extension kolliderte med Vercel build-pipeline (transpilert CJS-output mens Node forventet ESM → "exports is not defined"). Løsning: brukt `.mjs`-extension direkte (`auth.mjs`, `me.mjs`, `logout.mjs`, `_lib/session.mjs`) → utvetydig ESM uten transpilering. Fjernet `api/package.json`.
 - ✅ **Fjernet hash-tester**: Vercel ENV-vars markert "Sensitive" (default + best practice) er ikke lesbare etter save → ingen måte å sammenligne mot stored hash → testeren hadde ingen reell nytteverdi.
 - ✅ **Settings-faner**: SettingsModal delt i to faner — "Generelt" (config-info + bakgrunn) og "Sikkerhet" (Auth-secrets). Sikkerhet-fanen vises kun når `REACT_APP_SHOW_ADMIN_TOOLS=true`. Modalen er nå kortere og mer logisk strukturert.
-- ✅ **Multi-tenant via `REACT_APP_NAME_CONFIG`**: Samme mønster som `REACT_APP_NAME_URL`. Default-verdi `default` → `/clients/default.json`. Multi-tenant: sett til kundens id (f.eks. `acme`) → leser `/clients/acme.json`. Påvirker både `useBackground`-hook og Login-skjermens branding-fetch. Forberedt for at hver kunde får sin egen JSON med branding + bakgrunner uten kode-deploy.
+- ✅ **Multi-tenant via `REACT_APP_NAME_CONFIG`**: Samme mønster som `REACT_APP_NAME_URL`. Default-verdi `default` → `/clients/default.json`. Multi-tenant: sett til kundens id (f.eks. `acme`) → leser `/clients/acme.json`. Påvirker både `useBackground`-hook og Login-skjermens branding-fetch.
+- ✅ **Login-styling**: Branding-felt hentet fra `clients/<x>.json`:
+  - Stor tittel = `brand.name`
+  - Subtittel = `_meta.createdBy`
+  - Footer = `_meta.client · brand.tagline · APP_VERSION`
+- ✅ **Versjons-konstant**: `APP_VERSION` sentralisert i `themes.js` (`v6.0`). Brukes i topbar og login.
+- ✅ **Kategori-administrasjon**: Ny `CategoryMenu`-komponent (⋯-ikon ved siden av kategori-dropdown). Støtter:
+  - ✏️ Endre navn (inline tekst-input)
+  - ➕ Ny kategori (auto-switcher til ny)
+  - ↑↓ Flytt opp/ned
+  - 🗑 Slett (med bekreftelse via `useConfirm`)
+  - Setter `isDirty=true` på alle mutasjoner
+  - Synlig kun når `jsonStructure.hasCategories` (multi-section JSON med `kategori`-felt)
+- ✅ **Fikset tabell-overskrift**: Tidligere hardkodet til "Pakker i ..." — nå bruker faktisk `itemsKey` fra JSON (f.eks. "Tjenester i ..." for tannlege-per).
 
 

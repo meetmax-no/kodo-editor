@@ -22,6 +22,7 @@ import GithubPushModal from './components/GithubPushModal';
 import useBackground from './hooks/useBackground';
 import { parseGithubRawUrl } from './hooks/useGithubSource';
 import { useConfirm } from './components/ConfirmModal';
+import CategoryMenu from './components/CategoryMenu';
 import { APP_VERSION } from './themes';
 import {
   SECTION_TYPE,
@@ -477,6 +478,99 @@ function App({ auth }) {
     }
   };
 
+  // ─── Kategori-administrasjon (rename/add/delete/reorder) ───
+  // Felles helper som muterer jsonStructure.data + categories + tilhørende
+  // state i én operasjon. Markerer dirty via persistCurrentPackages før mutasjon.
+  const mutateCategories = (mutator, { newSelectedIndex, reloadPackages = true } = {}) => {
+    if (!jsonStructure?.hasCategories) return;
+    const persisted = persistCurrentPackages() || jsonStructure;
+    const next = mutator(persisted.data);
+    if (!next) return;
+    const catKey = persisted.categoryKey || 'kategori';
+    const updatedNames = next.map((c) => c[catKey]);
+    const rootIsArray = Array.isArray(persisted.originalData);
+    const updatedOriginal = rootIsArray
+      ? next
+      : { ...persisted.originalData, [persisted.mainKey]: next };
+    const updatedStructure = { ...persisted, data: next, originalData: updatedOriginal };
+    setJsonStructure(updatedStructure);
+    setCategories(updatedNames);
+    setIsDirty(true);
+    const idx = (newSelectedIndex !== undefined)
+      ? Math.max(0, Math.min(newSelectedIndex, updatedNames.length - 1))
+      : Math.max(0, Math.min(selectedCategoryIndex, updatedNames.length - 1));
+    setSelectedCategoryIndex(idx);
+    if (reloadPackages) loadPackagesForCategory(updatedStructure, idx);
+  };
+
+  const handleCategoryRename = (newName) => {
+    const catKey = jsonStructure?.categoryKey || 'kategori';
+    mutateCategories((data) =>
+      data.map((c, i) => (i === selectedCategoryIndex ? { ...c, [catKey]: newName } : c))
+    );
+    toast.success(`Kategorinavn endret til "${newName}"`);
+  };
+
+  const handleCategoryAdd = (newName) => {
+    const catKey = jsonStructure?.categoryKey || 'kategori';
+    const itemsKey = jsonStructure?.itemsKey || 'pakker';
+    mutateCategories(
+      (data) => [...data, { [catKey]: newName, [itemsKey]: [] }],
+      { newSelectedIndex: jsonStructure.data.length }
+    );
+    toast.success(`La til kategori "${newName}"`);
+  };
+
+  const handleCategoryMoveUp = () => {
+    if (selectedCategoryIndex === 0) return;
+    mutateCategories(
+      (data) => {
+        const next = [...data];
+        const tmp = next[selectedCategoryIndex - 1];
+        next[selectedCategoryIndex - 1] = next[selectedCategoryIndex];
+        next[selectedCategoryIndex] = tmp;
+        return next;
+      },
+      { newSelectedIndex: selectedCategoryIndex - 1 }
+    );
+  };
+
+  const handleCategoryMoveDown = () => {
+    if (selectedCategoryIndex >= categories.length - 1) return;
+    mutateCategories(
+      (data) => {
+        const next = [...data];
+        const tmp = next[selectedCategoryIndex + 1];
+        next[selectedCategoryIndex + 1] = next[selectedCategoryIndex];
+        next[selectedCategoryIndex] = tmp;
+        return next;
+      },
+      { newSelectedIndex: selectedCategoryIndex + 1 }
+    );
+  };
+
+  const handleCategoryDelete = async () => {
+    if (categories.length <= 1) {
+      toast.error('Kan ikke slette siste kategori');
+      return;
+    }
+    const name = categories[selectedCategoryIndex];
+    const ok = await confirm({
+      title: `Slett "${name}"?`,
+      message: `Kategorien og alle ${packages.length} ${jsonStructure?.itemsKey || 'item'}-rader fjernes. Endringen blir lagret når du klikker "Lagre" eller "Lagre til GitHub".`,
+      confirmLabel: 'Slett kategori',
+      cancelLabel: 'Avbryt',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    mutateCategories(
+      (data) => data.filter((_, i) => i !== selectedCategoryIndex),
+      { newSelectedIndex: Math.max(0, selectedCategoryIndex - 1) }
+    );
+    toast.success(`Slettet "${name}"`);
+  };
+
+
   // Load JSON from URL
   // Sjekk om brukeren vil forkaste ulagrede endringer.
   // Returnerer true hvis det er trygt å fortsette.
@@ -560,6 +654,7 @@ function App({ auth }) {
         originalData: data,
         mainKey,
         itemsKey,
+        categoryKey: 'kategori',
       });
     } else {
       const itemsWithIds = mainArray.map((item, idx) => ({
@@ -782,6 +877,7 @@ function App({ auth }) {
         originalData: data,
         mainKey,
         itemsKey,
+        categoryKey: catKey,
       });
       setSelectedCategoryIndex(0);
     }
@@ -1569,6 +1665,19 @@ function App({ auth }) {
             testId="category-dropdown"
           />
 
+          {jsonStructure?.hasCategories && (
+            <CategoryMenu
+              currentName={categories[selectedCategoryIndex]}
+              index={selectedCategoryIndex}
+              total={categories.length}
+              onRename={handleCategoryRename}
+              onAdd={handleCategoryAdd}
+              onMoveUp={handleCategoryMoveUp}
+              onMoveDown={handleCategoryMoveDown}
+              onDelete={handleCategoryDelete}
+            />
+          )}
+
           <button
             onClick={handleNext}
             disabled={selectedCategoryIndex === categories.length - 1}
@@ -1631,7 +1740,11 @@ function App({ auth }) {
         <div className="table-section">
           <div className="table-header-bar">
             <h2 className="section-title-inline">
-              {jsonStructure?.hasCategories ? 'Pakker' : 'Items'} i "{categories[selectedCategoryIndex]}"
+              {jsonStructure?.hasCategories
+                ? (jsonStructure.itemsKey
+                    ? jsonStructure.itemsKey.charAt(0).toUpperCase() + jsonStructure.itemsKey.slice(1)
+                    : 'Pakker')
+                : 'Items'} i "{categories[selectedCategoryIndex]}"
               {searchQuery && (
                 <span className="filter-badge" data-testid="filter-badge">
                   {filteredPackages.length} av {packages.length} treff
