@@ -1,7 +1,7 @@
 // src/themes.js — types + utils for V5.0 background system.
 // All actual data lives in /clients/default.json (fetched at runtime).
 
-export const APP_VERSION = 'v5.0';
+export const APP_VERSION = 'v6.0';
 
 export const ROTATE_MODES = {
   STATIC: 'static',

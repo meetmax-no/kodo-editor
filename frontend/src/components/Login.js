@@ -38,7 +38,8 @@ export default function Login({ onLogin, error, brand: brandProp, meta: metaProp
     tagline: 'Universal JSON Editor',
   };
   const meta = metaProp || fallbackConfig?._meta || {};
-  const clientName = meta.client || brand.tagline || '';
+  const subtitle = meta.createdBy || '';   // Subtittel: hvem som har laget config'en
+  const clientName = meta.client || '';    // Footer: hvilken kunde denne deployen er for
 
   // Admin-modus: vis detaljert teknisk feilmelding ved server-feil (5xx)
   const showAdminDetails = process.env.REACT_APP_SHOW_ADMIN_TOOLS === 'true';
@@ -106,9 +107,9 @@ export default function Login({ onLogin, error, brand: brandProp, meta: metaProp
                 <span className="login-brand-name" data-testid="login-brand-name">
                   {brand.name || 'KoDo Editor'}
                 </span>
-                {clientName && (
+                {subtitle && (
                   <span className="login-brand-customer" data-testid="login-brand-client">
-                    {clientName}
+                    {subtitle}
                   </span>
                 )}
               </div>
