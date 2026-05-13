@@ -1,0 +1,69 @@
+{
+  "prisliste": [
+    {
+      "kategori": "Undersøkelse og kontroll",
+      "tjenester": [
+        {
+          "tjeneste": "Ordinær kontroll",
+          "pris": "Fra kr 950,-"
+        },
+        {
+          "tjeneste": "Akutt konsultasjon",
+          "pris": "Fra kr 1.200,-"
+        },
+        {
+          "tjeneste": "Røntgen (bitewing)",
+          "pris": "Fra kr 350,-"
+        }
+      ]
+    },
+    {
+      "kategori": "Forebyggende behandling",
+      "tjenester": [
+        {
+          "tjeneste": "Tannrens",
+          "pris": "Fra kr 1.100,-"
+        },
+        {
+          "tjeneste": "Fluorbehandling",
+          "pris": "Fra kr 450,-"
+        }
+      ]
+    },
+    {
+      "kategori": "Fyllinger",
+      "tjenester": [
+        {
+          "tjeneste": "Enkel fylling",
+          "pris": "Fra kr 1.500,-"
+        },
+        {
+          "tjeneste": "Større fylling",
+          "pris": "Fra kr 2.200,-"
+        }
+      ]
+    },
+    {
+      "kategori": "Protetikk",
+      "tjenester": [
+        {
+          "tjeneste": "Krone (keramikk)",
+          "pris": "Fra kr 9.500,-"
+        },
+        {
+          "tjeneste": "Bro (per ledd)",
+          "pris": "Fra kr 8.500,-"
+        }
+      ]
+    },
+    {
+      "kategori": "Bleking",
+      "tjenester": [
+        {
+          "tjeneste": "Bleking (begge kjever) inkl skinne",
+          "pris": "kr 3.600,-"
+        }
+      ]
+    }
+  ]
+}

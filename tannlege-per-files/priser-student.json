@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "title": "Studenttilbud",
+    "description": "Markedsføring og vilkår for studentpakken",
+    "updatedAt": "2026-05-13"
+  },
+  "studenttilbud": {
+    "aktiv": true,
+    "pakke": "Undersøkelse/rtg og puss/rens: 950,-",
+    "rabatt_ovrig": "15% rabatt på øvrig behandling",
+    "merknad": "Gyldig studentbevis må fremvises"
+  }
+}
