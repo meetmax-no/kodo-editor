@@ -166,7 +166,16 @@ Se `/app/frontend/DEPLOYMENT.md` for komplett Vercel-setup (Root Directory=`fron
 - ✅ Husk meg checkbox (30 dager)
 - ✅ Eye-toggle på alle passord-felt
 - ✅ Logout-knapp i StatusBar
-- ✅ PasswordAdminPanel i Settings: hash-gen + hash-tester (admin-only via env-flag)
+- ✅ PasswordAdminPanel i Settings: hash-gen + hash-tester + JWT-secret-gen (admin-only via env-flag)
 - ✅ CLI backup `yarn gen-hash`
 - ✅ Oppdatert DEPLOYMENT.md med komplett Vercel-setup
 - ✅ Fullstendig e2e-testet, 100% success
+
+## Patches etter første deploy (2026-05-13, samme sesjon)
+- ✅ Bedre 500-feilmeldinger med error codes (MISSING_HASH, INVALID_HASH, MISSING_JWT_SECRET, JWT_TOO_SHORT, INTERNAL). Admin-modus viser detaljer; kunde får generisk melding.
+- ✅ Login bakgrunn arver app-bakgrunn via AuthGate-`useBackground(null)` — ikke lenger hardkodet svart
+- ✅ Login-kortet bruker `var(--glass-strong)` / `backdrop-filter: blur(20px) saturate(140%)` — samme glass-stil som resten av appen
+- ✅ Innebygd JWT-secret-generator (crypto.getRandomValues, 32/48/64 bytes)
+- ✅ Tydeligere workflow i Settings: tips om å teste hash FØR Vercel + note om at Vercel maskerer ENV etter save
+- ✅ **Fikset Vercel deploy-error**: `jose v6` er ESM-only og kunne ikke `require()`-es. Konvertert hele `/api/`-mappa til ESM (`api/package.json: {"type":"module"}`, `import/export` syntax).
+

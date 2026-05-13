@@ -1,34 +1,22 @@
 // POST /api/auth — validér passord, sett sesjons-cookie.
-//
-// Body: { password: string, remember?: boolean }
-//
-// Svar:
-//   200 { ok: true, client, expiresIn } + Set-Cookie
-//   400 { error, code: 'MISSING_PASSWORD' }
-//   401 { error, code: 'WRONG_PASSWORD' }
-//   405 { error: 'Method not allowed' }
-//   500 { error, code: 'MISSING_HASH' | 'MISSING_JWT_SECRET' | 'JWT_TOO_SHORT'
-//                       | 'INVALID_HASH' | 'INTERNAL' }
-//
-// Alle 500-svar har 'code' slik at frontend kan vise informativ feilmelding
-// for admin (REACT_APP_SHOW_ADMIN_TOOLS=true) og generisk melding for kunde.
+// ESM module (api/package.json: "type": "module")
 
-const bcrypt = require('bcryptjs');
-const {
+import bcrypt from 'bcryptjs';
+import {
   COOKIE_NAME,
   TTL_DEFAULT_SECONDS,
   TTL_REMEMBER_SECONDS,
   signSession,
   buildSetCookie,
   isHttpsRequest,
-} = require('./_lib/session');
+} from './_lib/session.js';
 
 function bruteForceDelay() {
   const ms = 400 + Math.floor(Math.random() * 800);
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
@@ -47,7 +35,6 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'Manglende passord', code: 'MISSING_PASSWORD' });
   }
 
-  // Pre-flight: sjekk at server-konfig er på plass FØR vi prøver å validere
   const hash = process.env.AUTH_PASSWORD_HASH;
   if (!hash) {
     console.error('[auth] AUTH_PASSWORD_HASH er ikke satt');
@@ -80,7 +67,6 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // Validér passord
   let match = false;
   try {
     match = await bcrypt.compare(password, hash);
@@ -97,7 +83,6 @@ module.exports = async function handler(req, res) {
     return res.status(401).json({ error: 'Feil passord', code: 'WRONG_PASSWORD' });
   }
 
-  // Sign session
   const ttl = remember ? TTL_REMEMBER_SECONDS : TTL_DEFAULT_SECONDS;
   const client = process.env.AUTH_CLIENT_ID || 'default';
 
@@ -123,4 +108,4 @@ module.exports = async function handler(req, res) {
   );
 
   return res.status(200).json({ ok: true, client, expiresIn: ttl });
-};
+}

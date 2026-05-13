@@ -1,14 +1,9 @@
 // POST /api/logout — slett sesjons-cookie.
-//
-// 200: { ok: true } + Set-Cookie: kodo_session=; Max-Age=0
+// ESM module
 
-const {
-  COOKIE_NAME,
-  buildSetCookie,
-  isHttpsRequest,
-} = require('./_lib/session');
+import { COOKIE_NAME, buildSetCookie, isHttpsRequest } from './_lib/session.js';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
@@ -25,4 +20,4 @@ module.exports = async function handler(req, res) {
   );
 
   return res.status(200).json({ ok: true });
-};
+}

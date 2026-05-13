@@ -1,16 +1,14 @@
 // Session helpers — sign/verify JWT, parse/serialize cookies.
-// Shared by /api/auth, /api/me, /api/logout.
-//
-// Runtime: Node 20 (Vercel default). Uses `jose` (works in both Node + Edge).
+// ESM (api/package.json: "type": "module") — kompatibel med jose v6.
 
-const { SignJWT, jwtVerify } = require('jose');
+import { SignJWT, jwtVerify } from 'jose';
 
-const COOKIE_NAME = 'kodo_session';
+export const COOKIE_NAME = 'kodo_session';
 const ALG = 'HS256';
 
 // TTL i sekunder
-const TTL_DEFAULT_SECONDS = 2 * 60 * 60;        // 2 timer
-const TTL_REMEMBER_SECONDS = 30 * 24 * 60 * 60; // 30 dager
+export const TTL_DEFAULT_SECONDS = 2 * 60 * 60;        // 2 timer
+export const TTL_REMEMBER_SECONDS = 30 * 24 * 60 * 60; // 30 dager
 
 function getJwtSecret() {
   const secret = process.env.AUTH_JWT_SECRET;
@@ -20,7 +18,7 @@ function getJwtSecret() {
   return new TextEncoder().encode(secret);
 }
 
-async function signSession({ client = 'default', ttlSeconds }) {
+export async function signSession({ client = 'default', ttlSeconds }) {
   const now = Math.floor(Date.now() / 1000);
   return await new SignJWT({ client })
     .setProtectedHeader({ alg: ALG })
@@ -29,7 +27,7 @@ async function signSession({ client = 'default', ttlSeconds }) {
     .sign(getJwtSecret());
 }
 
-async function verifySession(token) {
+export async function verifySession(token) {
   try {
     const { payload } = await jwtVerify(token, getJwtSecret(), { algorithms: [ALG] });
     return { ok: true, payload };
@@ -38,7 +36,7 @@ async function verifySession(token) {
   }
 }
 
-function readCookie(req, name) {
+export function readCookie(req, name) {
   const header = req.headers?.cookie || '';
   if (!header) return null;
   for (const part of header.split(';')) {
@@ -48,7 +46,7 @@ function readCookie(req, name) {
   return null;
 }
 
-function buildSetCookie({ name, value, maxAgeSeconds, secure }) {
+export function buildSetCookie({ name, value, maxAgeSeconds, secure }) {
   const parts = [
     `${name}=${value}`,
     'Path=/',
@@ -63,19 +61,8 @@ function buildSetCookie({ name, value, maxAgeSeconds, secure }) {
   return parts.join('; ');
 }
 
-function isHttpsRequest(req) {
+export function isHttpsRequest(req) {
   // Vercel sender alltid x-forwarded-proto=https i prod
   const proto = req.headers?.['x-forwarded-proto'];
   return proto === 'https' || (Array.isArray(proto) && proto.includes('https'));
 }
-
-module.exports = {
-  COOKIE_NAME,
-  TTL_DEFAULT_SECONDS,
-  TTL_REMEMBER_SECONDS,
-  signSession,
-  verifySession,
-  readCookie,
-  buildSetCookie,
-  isHttpsRequest,
-};
