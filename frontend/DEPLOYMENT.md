@@ -84,9 +84,12 @@ Project → Settings → Environment Variables. Sett følgende:
 | Navn | Kunde-deploy | Admin/dev-deploy |
 |---|---|---|
 | `REACT_APP_NAME_URL` | `url` (eller annet filnavn) | `url` |
+| `REACT_APP_NAME_CONFIG` | `default` *(eller kunde-id, f.eks. `acme`)* | `default` |
 | `REACT_APP_PUSH_GITHUB` | `false` | `true` |
 | `REACT_APP_SHOW_ADMIN_TOOLS` | `false` | `true` |
 | `REACT_APP_AUTH_DEV_BYPASS` | `false` *(eller unset)* | `false` |
+
+> 💡 **`REACT_APP_NAME_CONFIG`** bestemmer hvilken JSON-fil fra `/public/clients/` som leses for branding + bakgrunner. Lag en egen `/public/clients/<kunde>.json` for kunde-spesifikk konfig, og sett env-varen til kundens id.
 
 > ⚠️ **VIKTIG**: `REACT_APP_AUTH_DEV_BYPASS=true` slår av all auth! Bruk KUN lokalt under `yarn start`.
 

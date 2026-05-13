@@ -8,7 +8,12 @@ import {
 } from '../themes';
 
 const STORAGE_KEY = 'kodo-editor-bg-prefs-v1';
-const CONFIG_URL = process.env.PUBLIC_URL + '/clients/default.json';
+
+// Filnavn (uten .json) styres av REACT_APP_NAME_CONFIG (Vercel ENV).
+// Default: "default" → /clients/default.json. Multi-tenant: sett til
+// f.eks. "acme" → /clients/acme.json for kundespesifikk branding/config.
+const CONFIG_NAME = process.env.REACT_APP_NAME_CONFIG || 'default';
+const CONFIG_URL = `${process.env.PUBLIC_URL}/clients/${CONFIG_NAME}.json`;
 
 function loadPrefs() {
   try {

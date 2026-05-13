@@ -18,9 +18,11 @@ export default function Login({ onLogin, error, brand: brandProp }) {
   // Fallback: hvis AuthGate ikke har lastet config enda, hent selv (samme kilde).
   const [fallbackBrand, setFallbackBrand] = useState(null);
 
+  // Last branding fra clients/<CONFIG>.json (samme kilde som useBackground)
   useEffect(() => {
     if (brandProp) return;
-    fetch('/clients/default.json', { cache: 'no-store' })
+    const configName = process.env.REACT_APP_NAME_CONFIG || 'default';
+    fetch(`/clients/${configName}.json`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((cfg) => cfg?.brand && setFallbackBrand(cfg.brand))
       .catch(() => {});
