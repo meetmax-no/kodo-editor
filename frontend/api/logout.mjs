@@ -1,7 +1,7 @@
 // POST /api/logout — slett sesjons-cookie.
-// ESM module
+// .mjs = pure ESM
 
-import { COOKIE_NAME, buildSetCookie, isHttpsRequest } from './_lib/session.js';
+import { COOKIE_NAME, buildSetCookie, isHttpsRequest } from './_lib/session.mjs';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

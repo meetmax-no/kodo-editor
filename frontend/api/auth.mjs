@@ -1,5 +1,5 @@
 // POST /api/auth — validér passord, sett sesjons-cookie.
-// ESM module (api/package.json: "type": "module")
+// .mjs = pure ESM (kreves av jose v6, og unngår Vercel-build-konflikter)
 
 import bcrypt from 'bcryptjs';
 import {
@@ -9,7 +9,7 @@ import {
   signSession,
   buildSetCookie,
   isHttpsRequest,
-} from './_lib/session.js';
+} from './_lib/session.mjs';
 
 function bruteForceDelay() {
   const ms = 400 + Math.floor(Math.random() * 800);

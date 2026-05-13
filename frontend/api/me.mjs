@@ -1,7 +1,7 @@
 // GET /api/me — sjekk om gjeldende cookie er en gyldig sesjon.
-// ESM module
+// .mjs = pure ESM
 
-import { COOKIE_NAME, verifySession, readCookie } from './_lib/session.js';
+import { COOKIE_NAME, verifySession, readCookie } from './_lib/session.mjs';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {

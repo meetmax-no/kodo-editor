@@ -1,5 +1,6 @@
 // Session helpers — sign/verify JWT, parse/serialize cookies.
-// ESM (api/package.json: "type": "module") — kompatibel med jose v6.
+// .mjs = pure ESM (kreves av jose v6, unngår Vercel build-pipeline-konflikter
+// som ble sett med {"type":"module"} + .js-extension)
 
 import { SignJWT, jwtVerify } from 'jose';
 

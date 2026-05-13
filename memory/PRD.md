@@ -176,7 +176,8 @@ Se `/app/frontend/DEPLOYMENT.md` for komplett Vercel-setup (Root Directory=`fron
 - ✅ Login bakgrunn arver app-bakgrunn via AuthGate-`useBackground(null)` — ikke lenger hardkodet svart
 - ✅ Login-kortet bruker `var(--glass-strong)` / `backdrop-filter: blur(20px) saturate(140%)` — samme glass-stil som resten av appen
 - ✅ Innebygd JWT-secret-generator (crypto.getRandomValues, 32/48/64 bytes)
-- ✅ **Fikset Vercel deploy-error**: `jose v6` er ESM-only og kunne ikke `require()`-es. Konvertert hele `/api/`-mappa til ESM (`api/package.json: {"type":"module"}`, `import/export` syntax). Min implementasjons-feil, ikke deploy-konfig.
+- ✅ **Fikset Vercel deploy-error (runde 1)**: `jose v6` er ESM-only og kunne ikke `require()`-es. Konvertert hele `/api/`-mappa til ESM.
+- ✅ **Fikset Vercel deploy-error (runde 2)**: `{"type":"module"}` i `api/package.json` + `.js`-extension kolliderte med Vercel build-pipeline (transpilert CJS-output mens Node forventet ESM → "exports is not defined"). Løsning: brukt `.mjs`-extension direkte (`auth.mjs`, `me.mjs`, `logout.mjs`, `_lib/session.mjs`) → utvetydig ESM uten transpilering. Fjernet `api/package.json`.
 - ✅ **Fjernet hash-tester**: Vercel ENV-vars markert "Sensitive" (default + best practice) er ikke lesbare etter save → ingen måte å sammenligne mot stored hash → testeren hadde ingen reell nytteverdi. Hash genereres deterministisk fra passord, så testen var redundant.
 
 
