@@ -3,14 +3,15 @@ import bcrypt from 'bcryptjs';
 import toast from 'react-hot-toast';
 
 /**
- * PasswordAdminPanel — innebygd hash-generator + hash-tester.
+ * PasswordAdminPanel — innebygde verktøy for å generere/teste auth-secrets.
  *
  * Synlig kun når REACT_APP_SHOW_ADMIN_TOOLS=true.
  *
  * Sikkerhet:
  *  - Hash genereres LOKALT i nettleseren via bcryptjs (cost 12)
+ *  - JWT-secret genereres LOKALT via crypto.getRandomValues() (CSPRNG)
  *  - Passordet sendes ALDRI til server
- *  - Resultat ligger kun i komponentens state, ikke i localStorage
+ *  - Resultater ligger kun i komponentens state, ikke i localStorage
  */
 export default function PasswordAdminPanel() {
   const enabled = process.env.REACT_APP_SHOW_ADMIN_TOOLS === 'true';
@@ -18,14 +19,15 @@ export default function PasswordAdminPanel() {
 
   return (
     <section className="settings-section" data-testid="password-admin-panel">
-      <h3 className="settings-section-title">Passord-administrasjon</h3>
+      <h3 className="settings-section-title">Auth-secrets</h3>
       <p className="settings-meta-hint">
-        Generer eller test bcrypt-hash for Vercel ENV-variabelen{' '}
-        <code>AUTH_PASSWORD_HASH</code>. Passordet forlater aldri nettleseren.
+        Generer eller test secrets som settes i Vercel Environment Variables.
+        Alle verdier produseres lokalt i nettleseren — ingenting sendes til server.
       </p>
 
       <HashGenerator />
       <HashTester />
+      <JwtSecretGenerator />
     </section>
   );
 }
@@ -256,5 +258,106 @@ function PasswordField({ label, value, onChange, show, onToggle, testId, autoFoc
         </button>
       </div>
     </>
+  );
+}
+
+
+/**
+ * JwtSecretGenerator — genererer en kryptografisk sikker tilfeldig hex-streng
+ * for AUTH_JWT_SECRET. Bruker crypto.getRandomValues() (CSPRNG) i browseren —
+ * samme sikkerhetsnivå som Node sin crypto.randomBytes().
+ *
+ * Default: 48 bytes → 96 hex-tegn (langt mer enn nødvendig for HS256).
+ */
+function JwtSecretGenerator() {
+  const [secret, setSecret] = useState('');
+  const [bytes, setBytes] = useState(48);
+
+  const handleGenerate = () => {
+    const arr = new Uint8Array(bytes);
+    window.crypto.getRandomValues(arr);
+    const hex = Array.from(arr)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+    setSecret(hex);
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(secret);
+      toast.success('JWT-secret kopiert til clipboard');
+    } catch {
+      toast.error('Kunne ikke kopiere — marker og kopier manuelt');
+    }
+  };
+
+  return (
+    <div className="pwd-block" data-testid="jwt-secret-generator" style={{ marginTop: 18 }}>
+      <h4 className="pwd-subtitle">🔑 Generer JWT-secret</h4>
+      <p className="pwd-hint">
+        Tilfeldig hex-streng for <code>AUTH_JWT_SECRET</code>.
+        Settes én gang — endres bare hvis du vil logge ut alle umiddelbart.
+      </p>
+
+      <label className="pwd-label">Lengde (bytes)</label>
+      <div className="jwt-len-row">
+        {[32, 48, 64].map((n) => (
+          <button
+            key={n}
+            type="button"
+            className={`jwt-len-pill ${bytes === n ? 'active' : ''}`}
+            onClick={() => setBytes(n)}
+            data-testid={`jwt-len-${n}`}
+          >
+            {n} bytes <span className="jwt-len-hex">({n * 2} hex)</span>
+          </button>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        className="pwd-btn pwd-btn-primary"
+        onClick={handleGenerate}
+        data-testid="jwt-generate-btn"
+      >
+        {secret ? 'Generer ny' : 'Generer secret'}
+      </button>
+
+      {secret && (
+        <div className="pwd-result" data-testid="jwt-result">
+          <div className="pwd-result-label">
+            Lim inn som <code>AUTH_JWT_SECRET</code> i Vercel:
+          </div>
+          <textarea
+            className="pwd-result-text"
+            readOnly
+            value={secret}
+            rows={3}
+            onFocus={(e) => e.target.select()}
+            data-testid="jwt-result-text"
+          />
+          <div className="pwd-actions-row">
+            <button
+              type="button"
+              className="pwd-btn pwd-btn-secondary"
+              onClick={handleCopy}
+              data-testid="jwt-copy-btn"
+            >
+              📋 Kopier secret
+            </button>
+          </div>
+          <div className="pwd-warning" data-testid="jwt-warning">
+            ⚠️ Lukk dette vinduet når du er ferdig. Secreten ligger ikke noe annet sted.
+            Hvis du mister den, må alle brukere logge inn på nytt.
+          </div>
+          <ol className="pwd-steps">
+            <li>Vercel Dashboard → Settings → Environment Variables</li>
+            <li>Add eller erstatt <code>AUTH_JWT_SECRET</code> med verdien over</li>
+            <li>Save → Deployments → Redeploy</li>
+            <li>Vent ~90 sek. Eksisterende cookies blir ugyldige hvis du roterte en gammel verdi.</li>
+          </ol>
+        </div>
+      )}
+    </div>
   );
 }
