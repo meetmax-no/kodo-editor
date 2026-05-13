@@ -18,16 +18,15 @@ export default function PasswordAdminPanel() {
   if (!enabled) return null;
 
   return (
-    <section className="settings-section" data-testid="password-admin-panel">
-      <h3 className="settings-section-title">Auth-secrets</h3>
+    <div className="settings-section settings-section-flush" data-testid="password-admin-panel">
       <p className="settings-meta-hint">
-        Generer eller test secrets som settes i Vercel Environment Variables.
+        Generer secrets som settes i Vercel Environment Variables.
         Alle verdier produseres lokalt i nettleseren — ingenting sendes til server.
       </p>
 
       <HashGenerator />
       <JwtSecretGenerator />
-    </section>
+    </div>
   );
 }
 
