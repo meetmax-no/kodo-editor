@@ -29,7 +29,7 @@
   },
   {
     "name": "JSON Editor - Default list",
-    "url": "https://raw.githubusercontent.com/meetmax-no/kodo-editor/refs/heads/main/public/url.json"
+    "url": "https://raw.githubusercontent.com/meetmax-no/kodo-editor/refs/heads/main/frontend/public/url.json"
   },
   {
     "name": "Custom URL...",
