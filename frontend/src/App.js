@@ -22,6 +22,7 @@ import GithubPushModal from './components/GithubPushModal';
 import useBackground from './hooks/useBackground';
 import { parseGithubRawUrl } from './hooks/useGithubSource';
 import { useConfirm } from './components/ConfirmModal';
+import { APP_VERSION } from './themes';
 import {
   SECTION_TYPE,
   ROW_KEY_FIELD,
@@ -1289,7 +1290,7 @@ function App({ auth }) {
           <div className="brand-logo">Ko</div>
           <div className="brand-text">
             <span className="brand-name">{bg.config?.brand?.name || 'Ko | Do · Editor'}</span>
-            <span className="brand-tag">{bg.config?.brand?.tagline || 'Universal JSON Editor'} · v5.0</span>
+            <span className="brand-tag">{bg.config?.brand?.tagline || 'Universal JSON Editor'} · {APP_VERSION}</span>
           </div>
         </div>
         <div className="topbar-actions">

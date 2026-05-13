@@ -34,7 +34,14 @@ export default function AuthGate({ children }) {
   }
 
   if (auth.status === 'unauthenticated') {
-    return <Login onLogin={auth.login} error={auth.error} brand={bg.config?.brand} />;
+    return (
+      <Login
+        onLogin={auth.login}
+        error={auth.error}
+        brand={bg.config?.brand}
+        meta={bg.config?._meta}
+      />
+    );
   }
 
   // Authenticated — render App, expose auth via prop

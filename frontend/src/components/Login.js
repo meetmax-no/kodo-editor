@@ -1,48 +1,52 @@
 import React, { useState, useEffect } from 'react';
+import { APP_VERSION } from '../themes';
 import './Login.css';
 
 /**
  * Login — branded login-skjerm for KoDo Editor.
  *
- * Bakgrunnen kommer fra <body> (satt av AuthGate via useBackground).
- * Login-kortet bruker samme glass-stil som resten av appen (var(--glass-strong)).
+ * Tre tekstkilder fra clients/<CONFIG>.json:
+ *   • brand.name      → stor tittel på toppen (f.eks. "Ko | Do - Editor")
+ *   • _meta.client    → liten subtittel (f.eks. "Ko | Do · Consult")
+ *   • brand.tagline   → fotnote sammen med versjon
  *
- * @param {object} brand   – { name, tagline, logo? } fra clients/default.json (AuthGate)
+ * Bakgrunnen kommer fra <body> (satt av AuthGate via useBackground).
+ *
+ * @param {object} brand   – { name, tagline, logo? }
+ * @param {object} meta    – { client, ... }
  */
-export default function Login({ onLogin, error, brand: brandProp }) {
+export default function Login({ onLogin, error, brand: brandProp, meta: metaProp }) {
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState(null);
-  // Fallback: hvis AuthGate ikke har lastet config enda, hent selv (samme kilde).
-  const [fallbackBrand, setFallbackBrand] = useState(null);
+  // Fallback hvis AuthGate ikke har lastet config enda (kort race ved første mount)
+  const [fallbackConfig, setFallbackConfig] = useState(null);
 
-  // Last branding fra clients/<CONFIG>.json (samme kilde som useBackground)
   useEffect(() => {
-    if (brandProp) return;
+    if (brandProp && metaProp) return;
     const configName = process.env.REACT_APP_NAME_CONFIG || 'default';
     fetch(`/clients/${configName}.json`, { cache: 'no-store' })
       .then((r) => r.json())
-      .then((cfg) => cfg?.brand && setFallbackBrand(cfg.brand))
+      .then(setFallbackConfig)
       .catch(() => {});
-  }, [brandProp]);
+  }, [brandProp, metaProp]);
 
-  const brand = brandProp || fallbackBrand || {
+  const brand = brandProp || fallbackConfig?.brand || {
     name: 'KoDo Editor',
     tagline: 'Universal JSON Editor',
   };
+  const meta = metaProp || fallbackConfig?._meta || {};
+  const clientName = meta.client || brand.tagline || '';
 
   // Admin-modus: vis detaljert teknisk feilmelding ved server-feil (5xx)
   const showAdminDetails = process.env.REACT_APP_SHOW_ADMIN_TOOLS === 'true';
 
-  // `error` fra useAuth er { status, message, code } eller string (localError).
   const renderError = () => {
     const e = localError || error;
     if (!e) return null;
-    // localError er en string
     if (typeof e === 'string') return <span>{e}</span>;
-    // Server-feil 5xx → vis admin-info hvis aktivert
     if (e.status >= 500 && showAdminDetails) {
       return (
         <div>
@@ -70,7 +74,6 @@ export default function Login({ onLogin, error, brand: brandProp }) {
     if (e.status >= 500) {
       return <span>Det oppstod en server-feil. Kontakt administrator.</span>;
     }
-    // 4xx — vis selve meldingen (f.eks. "Feil passord")
     return <span>{e.message}</span>;
   };
 
@@ -84,9 +87,7 @@ export default function Login({ onLogin, error, brand: brandProp }) {
     setSubmitting(true);
     const ok = await onLogin(password, remember);
     setSubmitting(false);
-    if (!ok) {
-      setPassword('');
-    }
+    if (!ok) setPassword('');
   };
 
   return (
@@ -102,8 +103,14 @@ export default function Login({ onLogin, error, brand: brandProp }) {
             <div className="login-brand">
               <div className="login-logo">Ko</div>
               <div className="login-brand-text">
-                <span className="login-brand-name">KoDo Editor</span>
-                <span className="login-brand-customer">{brand.name || 'Universal JSON Editor'}</span>
+                <span className="login-brand-name" data-testid="login-brand-name">
+                  {brand.name || 'KoDo Editor'}
+                </span>
+                {clientName && (
+                  <span className="login-brand-customer" data-testid="login-brand-client">
+                    {clientName}
+                  </span>
+                )}
               </div>
             </div>
           </header>
@@ -164,7 +171,13 @@ export default function Login({ onLogin, error, brand: brandProp }) {
           </div>
 
           <footer className="login-footer">
-            <span className="login-tagline">{brand.tagline || 'Universal JSON Editor'}</span>
+            <span className="login-footer-text" data-testid="login-footer-text">
+              {clientName && <span className="login-footer-client">{clientName}</span>}
+              {clientName && <span className="login-footer-sep"> · </span>}
+              <span className="login-footer-tagline">{brand.tagline || 'Universal JSON Editor'}</span>
+              <span className="login-footer-sep"> · </span>
+              <span className="login-footer-version">{APP_VERSION}</span>
+            </span>
           </footer>
         </form>
       </div>

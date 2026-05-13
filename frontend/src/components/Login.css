@@ -189,6 +189,24 @@
   color: var(--text-faint, rgba(255, 255, 255, 0.45));
   letter-spacing: 0.03em;
 }
+.login-footer-text {
+  font-size: 11px;
+  color: var(--text-faint, rgba(255, 255, 255, 0.45));
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+}
+.login-footer-client {
+  color: var(--text-soft, rgba(255, 255, 255, 0.7));
+  font-weight: 500;
+}
+.login-footer-sep {
+  opacity: 0.4;
+  margin: 0 1px;
+}
+.login-footer-version {
+  font-family: var(--mono, ui-monospace, monospace);
+  letter-spacing: 0;
+}
 
 /* ====== Light tone (for lyse bakgrunner) ====== */
 :root.tone-light .login-input { color: var(--text, rgba(15, 23, 42, 0.95)); }
