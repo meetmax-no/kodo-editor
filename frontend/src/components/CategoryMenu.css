@@ -6,30 +6,52 @@
 }
 
 .cat-menu-trigger {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
-  color: var(--text-soft, rgba(255, 255, 255, 0.7));
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 0;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
+  color: var(--text-soft, rgba(255, 255, 255, 0.85));
+  height: 36px;
+  padding: 0 12px 0 11px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease, transform 120ms ease;
   margin-left: 6px;
+  white-space: nowrap;
 }
 .cat-menu-trigger:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(251, 191, 36, 0.10);
   color: var(--text, rgba(255, 255, 255, 0.96));
-  border-color: var(--border-strong, rgba(255, 255, 255, 0.18));
+  border-color: rgba(251, 191, 36, 0.35);
 }
-.cat-menu-dots {
-  line-height: 1;
-  margin-top: -4px;
-  letter-spacing: 1px;
+.cat-menu-trigger:active { transform: translateY(0.5px); }
+.cat-menu-trigger.open {
+  background: rgba(251, 191, 36, 0.14);
+  color: var(--accent, #FBBF24);
+  border-color: rgba(251, 191, 36, 0.5);
+}
+.cat-menu-icon-pen {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+.cat-menu-trigger:hover .cat-menu-icon-pen { opacity: 1; }
+.cat-menu-trigger-label {
+  letter-spacing: 0.005em;
+}
+.cat-menu-chevron {
+  flex-shrink: 0;
+  opacity: 0.55;
+  margin-left: 2px;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+.cat-menu-trigger:hover .cat-menu-chevron { opacity: 0.85; }
+.cat-menu-chevron.open {
+  transform: rotate(180deg);
+  opacity: 1;
 }
 
 .cat-menu-popover {
@@ -107,12 +129,12 @@
   cursor: not-allowed;
 }
 .cat-menu-icon {
-  font-size: 14px;
-  width: 18px;
-  text-align: center;
-  display: inline-flex;
-  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.85;
 }
+.cat-menu-item:hover:not(:disabled) .cat-menu-icon { opacity: 1; }
 .cat-menu-danger { color: #fca5a5; }
 .cat-menu-danger:hover:not(:disabled) {
   background: rgba(220, 38, 38, 0.15);
