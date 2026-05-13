@@ -57,13 +57,25 @@ export default function useAuth() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password, remember }),
       });
-      const data = await res.json().catch(() => ({}));
+
+      // Forsøk JSON først, fall tilbake til ren tekst hvis det feiler
+      // (skjer typisk når Vercel-funksjonen krasjer før den får svart med JSON)
+      const contentType = res.headers.get('content-type') || '';
+      let data = {};
+      let rawText = null;
+      if (contentType.includes('application/json')) {
+        data = await res.json().catch(() => ({}));
+      } else {
+        rawText = await res.text().catch(() => null);
+      }
+
       if (!res.ok) {
-        // Behold rå info så Login kan vise admin-detaljer ved server-feil (>=500)
         setError({
           status: res.status,
-          message: data.error || `HTTP ${res.status}`,
+          message: data.error || rawText || `HTTP ${res.status}`,
           code: data.code || null,
+          contentType,
+          rawText,
         });
         return false;
       }

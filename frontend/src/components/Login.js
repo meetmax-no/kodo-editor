@@ -47,7 +47,21 @@ export default function Login({ onLogin, error, brand: brandProp }) {
           <div style={{ fontWeight: 600, marginBottom: 4 }}>
             Server-feil ({e.status}{e.code ? ` · ${e.code}` : ''})
           </div>
-          <div style={{ fontSize: 12, lineHeight: 1.5 }}>{e.message}</div>
+          <div style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 6 }}>{e.message}</div>
+          {!e.code && e.rawText && (
+            <details style={{ fontSize: 11, opacity: 0.85 }}>
+              <summary style={{ cursor: 'pointer' }}>Rå respons (klikk for å vise)</summary>
+              <pre style={{
+                marginTop: 6, padding: 8, background: 'rgba(0,0,0,0.25)',
+                borderRadius: 4, overflow: 'auto', maxHeight: 200, fontSize: 10
+              }}>{e.rawText.slice(0, 600)}</pre>
+            </details>
+          )}
+          {!e.code && !e.rawText && (
+            <div style={{ fontSize: 11, opacity: 0.85, marginTop: 4 }}>
+              Funksjonen krasjet før den fikk svart. Sjekk Vercel Dashboard → Logs.
+            </div>
+          )}
         </div>
       );
     }
