@@ -3,6 +3,32 @@ import './Modal.css';
 
 // Vanlige Lucide ikoner med emoji-representasjoner
 const ICONS = [
+  // ── Tannlege & medisinsk blokk (legg merke til at denne kommer øverst
+  //     for rask tilgang ved tannlege/helse-relatert innhold) ──
+  { name: 'Tooth', emoji: '🦷' },
+  { name: 'Toothbrush', emoji: '🪥' },
+  { name: 'Teeth', emoji: '😁' },
+  { name: 'Mouth', emoji: '👄' },
+  { name: 'Xray', emoji: '🩻' },
+  { name: 'Pill', emoji: '💊' },
+  { name: 'Syringe', emoji: '💉' },
+  { name: 'Bandage', emoji: '🩹' },
+  { name: 'Clinic', emoji: '🏥' },
+  { name: 'Lotion', emoji: '🧴' },
+  { name: 'Bone', emoji: '🦴' },
+  { name: 'Scissors', emoji: '✂️' },
+  { name: 'TestTube', emoji: '🧪' },
+  { name: 'Tools', emoji: '🛠️' },
+  { name: 'Bacteria', emoji: '🦠' },
+  { name: 'Doctor', emoji: '🧑‍⚕️' },
+  { name: 'Crutch', emoji: '🩼' },
+  { name: 'Family', emoji: '👨‍👩‍👧' },
+  { name: 'Senior', emoji: '👴' },
+  { name: 'Student', emoji: '🧑‍🎓' },
+  { name: 'Clipboard', emoji: '📋' },
+  { name: 'Money', emoji: '💰' },
+
+  // ── Generell blokk (uendret fra forrige liste) ──
   { name: 'Stethoscope', emoji: '🩺' },
   { name: 'Smile', emoji: '😊' },
   { name: 'HeartPulse', emoji: '❤️' },

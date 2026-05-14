@@ -162,6 +162,14 @@ Iterativ runde med små-til-mellomstore endringer mens kunde-deploy (Tannlege Pe
 **Versjons-konstant:**
 - `APP_VERSION` sentralisert i `themes.js` (nå `v6.1`). Brukes i topbar og login-footer.
 
+**Icon-picker utvidet:**
+- `IconPickerModal` har nå 71 ikoner totalt (var 49).
+- Lagt til 22 nye **tannlege- og medisinske ikoner** øverst i listen for rask tilgang:
+  - Tannlege: 🦷 Tooth, 🪥 Toothbrush, 😁 Teeth, 👄 Mouth, 🩻 Xray
+  - Medisin: 💊 Pill, 💉 Syringe, 🩹 Bandage, 🏥 Clinic, 🧴 Lotion, 🦴 Bone, ✂️ Scissors, 🧪 TestTube, 🛠️ Tools, 🦠 Bacteria, 🧑‍⚕️ Doctor, 🩼 Crutch
+  - Personer/admin: 👨‍👩‍👧 Family, 👴 Senior, 🧑‍🎓 Student, 📋 Clipboard, 💰 Money
+- Ingen ikoner fjernet — fortsatt full bakoverkompatibilitet for andre bruksområder.
+
 **Vercel deploy-fikser (underveis):**
 - Konvertert `/api/`-mappa fra `.js` (CJS) til `.mjs` (ESM) for å fungere med `jose v6` som er ESM-only.
 - Fjernet `api/package.json` etter konflikt mellom `{"type":"module"}` og Vercel build-pipeline.
