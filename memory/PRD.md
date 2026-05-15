@@ -173,10 +173,31 @@ Iterativ runde med små-til-mellomstore endringer mens kunde-deploy (Tannlege Pe
 **Mixed-object seksjoner (bugfix):**
 - Tidligere ble objekter med blandet innhold (primitives + arrays + nested objects) klassifisert som `UNKNOWN` og hoppet over fullstendig i UI — data forsvant fra editoren (men var beholdt i `originalData` ved lagring).
 - Ny `SECTION_TYPE.MIXED_OBJECT` i `sectionDetector.js`. `classifyValue` returnerer nå denne typen for blandet innhold istedenfor UNKNOWN.
-- `RootPrimitivesPanel` utvidet til å håndtere nested objects og array-of-objects: viser preview-chips + "🔧 Rediger JSON"-knapp som åpner ny `JsonValueModal` (textarea med JSON-validering ved lagring).
-- App.js: `loadSectionFromOriginal`, `persistCurrentSection` og `computeLiveJson` håndterer nå `MIXED_OBJECT` ved å speile hele subobjektet via `rootPrimitives`-state.
-- Treffer reelle bruksområder som `priser-student.json` (tannlege-per) hvor `landing` har `headline: array, tagline: string, venn_deal: object, slik_gjor_du: array-of-objects, klinikk: object` på ett nivå.
-- Filer: `src/utils/sectionDetector.js`, `src/components/RootPrimitivesPanel.js`, `src/components/JsonValueModal.js` (ny), `src/App.js`.
+- Første versjon (v6.1) brukte en JSON-textarea-modal (`JsonValueModal`) som "escape hatch" for nested objects/arrays. Den ble erstattet med en strukturert rekursiv editor i V7.0 (se under).
+- Filer: `src/utils/sectionDetector.js`.
+
+### V7.0 — Strukturert nested-editor (2026-05) ✨
+Erstatter JSON-textarea-modalen fra v6.1 med en **rekursiv inline editor** som rendrer hele subtreet på én skjerm med riktig UI per verditype. Brukeren kan ikke lenger skrive ugyldig JSON ved et uhell — alle endringer går gjennom strukturerte inputs.
+
+**Ny komponent `RecursiveObjectPanel`:**
+- Rendrer rekursivt et nested objekt med:
+  - **Primitive** (string/number/boolean) → inline input
+  - **Array-of-primitives** → "📝 Rediger"-knapp som åpner `ListEditModal` (samme komponent som brukes for andre lister)
+  - **Nested object** → "Card" med tittel og innrykk, inni: rekursiv subpanel
+  - **Array-of-objects** → mini-tabell hvor hver rad er en egen card med rekursiv subpanel + "+ Ny rad" / "🗑 Slett rad"-knapper
+- Path-baserte updates via `setAtPath`/`deleteAtPath` (`utils/objectPath.js`) — fullt immutable.
+- Dirty-tracking per path: `dirtyFields` inneholder strenger som `"root__landing.venn_deal.tittel"` → gul ring rundt endrede felter.
+
+**App.js-integrasjon:**
+- Ny `handleNestedChange(path, newValue)`, `handleNestedEditList(path, currentArray)`, `handleNestedAddRow(path, template)`, `handleNestedRemoveRow(rowPath)`-handlers.
+- `ListEditModal` deler logikk mellom (gammelt) `editingField`-flow og (nytt) `nestedListEdit`-flow.
+- `JsonValueModal` slettet — RecursiveObjectPanel dekker alle bruksområder.
+
+**Treffer reelle bruksområder** som `priser-student.json` (tannlege-per) hvor `landing` har `headline: array, tagline: string, venn_deal: object, slik_gjor_du: array-of-objects, klinikk: object` på ett nivå — alle redigerbare strukturert uten å skrive JSON.
+
+**Versjon bumpet** fra v6.1 → **v7.0** i `themes.js`.
+
+**Filer:** `src/utils/objectPath.js` (ny), `src/components/RecursiveObjectPanel.js` (ny), `src/components/RecursiveObjectPanel.css` (ny), `src/App.js`, `src/themes.js`. `JsonValueModal.js` slettet.
 
 **Vercel deploy-fikser (underveis):**
 - Konvertert `/api/`-mappa fra `.js` (CJS) til `.mjs` (ESM) for å fungere med `jose v6` som er ESM-only.
@@ -259,7 +280,7 @@ Alle disse var iterativ polish som ledet fram til **V6.1**. Se `## V6.1 — Whit
 - Hardkodet tema-velger (Mørk/Lys/Blå/Oransje)
 
 ## Status
-- **Versjon: v6.1** (satt i `themes.js`).
+- **Versjon: v7.0** (satt i `themes.js`).
 - Klar for kunde-deploy (Tannlege Per). Bruker håndterer `public/clients/<kunde>.json` + `public/url-<kunde>.json` selv ifm. Vercel-deploy.
 - Ingen kode-endringer per kunde — kun env-vars `REACT_APP_NAME_CONFIG` og `REACT_APP_NAME_URL`.
 

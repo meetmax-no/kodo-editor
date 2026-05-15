@@ -12,7 +12,8 @@ import JsonPreviewPanel from './components/JsonPreviewPanel';
 import SectionPicker from './components/SectionPicker';
 import Sidebar from './components/Sidebar';
 import RootPrimitivesPanel from './components/RootPrimitivesPanel';
-import JsonValueModal from './components/JsonValueModal';
+import RecursiveObjectPanel from './components/RecursiveObjectPanel';
+import { setAtPath, deleteAtPath, pathToKey } from './utils/objectPath';
 import AddFieldModal from './components/AddFieldModal';
 import SettingsModal from './components/SettingsModal';
 import CommandPalette from './components/CommandPalette';
@@ -128,9 +129,8 @@ function App({ auth }) {
   // V6.1: GitHub push modal + tracking av lastet kilde-URL
   const [githubModalOpen, setGithubModalOpen] = useState(false);
   const [loadedUrl, setLoadedUrl] = useState(null);
-  // V6.1: JSON-value modal for nested objects / array-of-objects i MIXED_OBJECT-seksjoner
-  const [jsonValueModalOpen, setJsonValueModalOpen] = useState(false);
-  const [jsonValueField, setJsonValueField] = useState({ name: null, value: null });
+  // V7.0: For MIXED_OBJECT-seksjoner — ListEditModal trigget fra dyp path
+  const [nestedListEdit, setNestedListEdit] = useState({ path: null, value: null });
   // V5.0: sidebar collapsed state for ≥7 seksjoner
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try { return localStorage.getItem('kodo-editor-sidebar-collapsed-v1') === '1'; } catch { return false; }
@@ -1122,17 +1122,42 @@ function App({ auth }) {
     setListModalOpen(true);
   };
 
-  // V6.1: Åpne JsonValueModal for nested object / array-of-objects i MIXED_OBJECT-seksjon
-  const handleEditRootJson = (fieldName, value) => {
-    setJsonValueField({ name: fieldName, value });
-    setJsonValueModalOpen(true);
-  };
-  const handleSaveJsonValue = (newValue) => {
-    if (jsonValueField.name) {
-      handleRootPrimitiveChange(jsonValueField.name, newValue);
+  // V7.0: Nested-path handlers for MIXED_OBJECT-seksjoner via RecursiveObjectPanel
+  //       rootPrimitives inneholder hele subobjektet, og path er relativ til det.
+  const handleNestedChange = (path, newValue) => {
+    if (!path || path.length === 0) return;
+    pushUndo();
+    setRootPrimitives((prev) => setAtPath(prev || {}, path, newValue));
+    setIsDirty(true);
+    setDirtyFields((prev) => new Set(prev).add(`root__${pathToKey(path)}`));
+    if (activeSectionKey) {
+      setDirtySections((prev) => new Set(prev).add(activeSectionKey));
     }
-    setJsonValueModalOpen(false);
-    setJsonValueField({ name: null, value: null });
+  };
+  const handleNestedEditList = (path, currentArray) => {
+    setNestedListEdit({ path, value: currentArray || [] });
+    setListModalOpen(true);
+  };
+  const handleNestedAddRow = (path, template) => {
+    pushUndo();
+    setRootPrimitives((prev) => {
+      const currentArr = path.reduce((acc, seg) => (acc == null ? acc : acc[seg]), prev || {});
+      const list = Array.isArray(currentArr) ? currentArr : [];
+      const next = [...list, template || {}];
+      return setAtPath(prev || {}, path, next);
+    });
+    setIsDirty(true);
+    if (activeSectionKey) {
+      setDirtySections((prev) => new Set(prev).add(activeSectionKey));
+    }
+  };
+  const handleNestedRemoveRow = (rowPath) => {
+    pushUndo();
+    setRootPrimitives((prev) => deleteAtPath(prev || {}, rowPath));
+    setIsDirty(true);
+    if (activeSectionKey) {
+      setDirtySections((prev) => new Set(prev).add(activeSectionKey));
+    }
   };
 
   const resetEditingField = () =>
@@ -1151,7 +1176,16 @@ function App({ auth }) {
   };
 
   const handleSaveText  = (newValue)   => applySavedValue(newValue);
-  const handleSaveList  = (newList)    => applySavedValue(newList);
+  // V7.0: ListEditModal kan være åpnet enten fra rad/rot-felt (editingField) ELLER
+  //       fra nested path i MIXED_OBJECT-seksjon (nestedListEdit). Dispatcher håndterer begge.
+  const handleSaveList  = (newList)    => {
+    if (nestedListEdit.path) {
+      handleNestedChange(nestedListEdit.path, newList);
+      setNestedListEdit({ path: null, value: null });
+    } else {
+      applySavedValue(newList);
+    }
+  };
   const handleSaveIcon  = (iconName)   => applySavedValue(iconName);
   const handleSaveColor = (colorValue) => applySavedValue(colorValue);
 
@@ -1747,18 +1781,35 @@ function App({ auth }) {
           );
         })()}
 
-        {/* V3.0: RootPrimitivesPanel når aktiv seksjon er primitive eller mixed-object */}
-        {sections &&
-          (activeSectionType === SECTION_TYPE.PRIMITIVE ||
-            activeSectionType === SECTION_TYPE.MIXED_OBJECT) &&
-          rootPrimitives && (
+        {/* V3.0: RootPrimitivesPanel når aktiv seksjon er primitive (rot-nivå) */}
+        {sections && activeSectionType === SECTION_TYPE.PRIMITIVE && rootPrimitives && (
           <RootPrimitivesPanel
             data={rootPrimitives}
             dirtyFields={dirtyFields}
             onChange={handleRootPrimitiveChange}
             onEditArray={handleEditRootArray}
-            onEditJson={handleEditRootJson}
           />
+        )}
+
+        {/* V7.0: RecursiveObjectPanel når aktiv seksjon er mixed-object */}
+        {sections && activeSectionType === SECTION_TYPE.MIXED_OBJECT && rootPrimitives && (
+          <div style={{ padding: '0 4px' }} data-testid="mixed-object-panel">
+            <RecursiveObjectPanel
+              data={rootPrimitives}
+              basePath={[]}
+              onChange={handleNestedChange}
+              onEditList={handleNestedEditList}
+              onAddRow={handleNestedAddRow}
+              onRemoveRow={handleNestedRemoveRow}
+              dirtyPaths={
+                new Set(
+                  Array.from(dirtyFields)
+                    .filter((k) => typeof k === 'string' && k.startsWith('root__'))
+                    .map((k) => k.slice('root__'.length))
+                )
+              }
+            />
+          </div>
         )}
 
         {/* Pakker-tabell — skjules når aktiv seksjon er primitive eller mixed-object */}
@@ -2027,18 +2078,12 @@ function App({ auth }) {
 
       <ListEditModal
         isOpen={listModalOpen}
-        onClose={() => setListModalOpen(false)}
-        title={`Rediger liste: ${editingField.fieldName}`}
-        items={editingField.value}
+        onClose={() => { setListModalOpen(false); setNestedListEdit({ path: null, value: null }); }}
+        title={nestedListEdit.path
+          ? `Rediger liste: ${nestedListEdit.path[nestedListEdit.path.length - 1]}`
+          : `Rediger liste: ${editingField.fieldName}`}
+        items={nestedListEdit.path ? nestedListEdit.value : editingField.value}
         onSave={handleSaveList}
-      />
-
-      <JsonValueModal
-        isOpen={jsonValueModalOpen}
-        onClose={() => setJsonValueModalOpen(false)}
-        fieldName={jsonValueField.name}
-        initialValue={jsonValueField.value}
-        onSave={handleSaveJsonValue}
       />
 
       <IconPickerModal

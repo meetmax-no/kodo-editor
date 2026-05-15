@@ -1,0 +1,266 @@
+/* RecursiveObjectPanel — nested object editor med innrykk og kort */
+
+.rop-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rop-empty {
+  padding: 14px;
+  color: var(--text-faint, rgba(255, 255, 255, 0.5));
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* ── Flat felt-rad (primitive / array of primitives) ── */
+.rop-field-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+.rop-field-row:hover {
+  border-color: var(--border-strong, rgba(255, 255, 255, 0.14));
+  background: rgba(255, 255, 255, 0.035);
+}
+.rop-field-row.rop-field-array {
+  grid-template-columns: 220px 1fr;
+}
+
+.rop-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-soft, rgba(255, 255, 255, 0.78));
+  letter-spacing: 0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rop-meta {
+  color: var(--text-faint, rgba(255, 255, 255, 0.4));
+  font-weight: 400;
+  font-size: 11px;
+  margin-left: 6px;
+}
+
+/* Inputs */
+.rop-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
+  border-radius: 7px;
+  color: var(--text, rgba(255, 255, 255, 0.96));
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.rop-input:focus {
+  border-color: var(--accent, #FBBF24);
+  box-shadow: 0 0 0 3px var(--accent-glow, rgba(251, 191, 36, 0.18));
+}
+.rop-input.rop-edited,
+.rop-array-btn.rop-edited {
+  border-color: var(--accent, #FBBF24);
+  background: var(--accent-soft, rgba(251, 191, 36, 0.10));
+}
+.rop-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent, #FBBF24);
+}
+
+/* Array-of-primitives knapp */
+.rop-array-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
+  border-radius: 7px;
+  color: var(--text, rgba(255, 255, 255, 0.92));
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+.rop-array-btn:hover {
+  border-color: var(--border-strong, rgba(255, 255, 255, 0.20));
+  background: rgba(0, 0, 0, 0.30);
+}
+.rop-array-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+  overflow: hidden;
+}
+.rop-array-chip {
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--text-soft, rgba(255, 255, 255, 0.78));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+.rop-array-more {
+  padding: 2px 8px;
+  background: var(--accent-soft, rgba(251, 191, 36, 0.16));
+  color: var(--accent, #FBBF24);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.rop-array-empty {
+  color: var(--text-faint, rgba(255, 255, 255, 0.42));
+  font-style: italic;
+  font-size: 12px;
+}
+.rop-array-edit {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--accent, #FBBF24);
+  font-weight: 500;
+}
+
+/* ── Card (nested object eller array-of-objects) ── */
+.rop-card {
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  overflow: hidden;
+}
+.rop-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+.rop-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent, #FBBF24);
+  flex: 1;
+}
+.rop-card-meta {
+  font-size: 11px;
+  color: var(--text-faint, rgba(255, 255, 255, 0.5));
+  font-weight: 400;
+}
+.rop-card-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Array-of-objects: spesielle radkort innenfor card-body ── */
+.rop-card-rows .rop-card-body {
+  gap: 14px;
+}
+.rop-row-card {
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+.rop-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+}
+.rop-row-number {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-soft, rgba(255, 255, 255, 0.65));
+  letter-spacing: 0.05em;
+}
+.rop-row-card .rop-card-body,
+.rop-row-card > .rop-fields {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rop-row-card .rop-fields {
+  padding: 10px 12px;
+}
+
+/* Add/remove knapper */
+.rop-add-row-btn,
+.rop-remove-row-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.10));
+  color: var(--text-soft, rgba(255, 255, 255, 0.78));
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+.rop-add-row-btn:hover {
+  background: var(--accent-soft, rgba(251, 191, 36, 0.16));
+  border-color: var(--accent, #FBBF24);
+  color: var(--accent, #FBBF24);
+}
+.rop-remove-row-btn {
+  padding: 4px 8px;
+  font-size: 13px;
+}
+.rop-remove-row-btn:hover {
+  background: rgba(248, 113, 113, 0.16);
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #FCA5A5;
+}
+
+/* ── Light tone ── */
+:root.tone-light .rop-field-row,
+:root.tone-light .rop-card,
+:root.tone-light .rop-row-card {
+  background: rgba(15, 23, 42, 0.02);
+  border-color: rgba(15, 23, 42, 0.10);
+}
+:root.tone-light .rop-card-header {
+  background: rgba(15, 23, 42, 0.04);
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+:root.tone-light .rop-input,
+:root.tone-light .rop-array-btn {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: rgba(15, 23, 42, 0.92);
+}
+:root.tone-light .rop-label,
+:root.tone-light .rop-row-number {
+  color: rgba(15, 23, 42, 0.78);
+}
+:root.tone-light .rop-array-chip {
+  background: rgba(15, 23, 42, 0.06);
+  color: rgba(15, 23, 42, 0.78);
+}

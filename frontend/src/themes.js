@@ -1,7 +1,7 @@
 // src/themes.js — types + utils for V5.0 background system.
 // All actual data lives in /clients/default.json (fetched at runtime).
 
-export const APP_VERSION = 'v6.1';
+export const APP_VERSION = 'v7.0';
 
 // ── Tema: hardkodet liste. Settes via Innstillinger og persisterer i localStorage.
 //        Uavhengig av bakgrunn — bakgrunn styrer bakgrunns-bilde/gradient,
