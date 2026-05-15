@@ -170,6 +170,14 @@ Iterativ runde med små-til-mellomstore endringer mens kunde-deploy (Tannlege Pe
   - Personer/admin: 👨‍👩‍👧 Family, 👴 Senior, 🧑‍🎓 Student, 📋 Clipboard, 💰 Money
 - Ingen ikoner fjernet — fortsatt full bakoverkompatibilitet for andre bruksområder.
 
+**Mixed-object seksjoner (bugfix):**
+- Tidligere ble objekter med blandet innhold (primitives + arrays + nested objects) klassifisert som `UNKNOWN` og hoppet over fullstendig i UI — data forsvant fra editoren (men var beholdt i `originalData` ved lagring).
+- Ny `SECTION_TYPE.MIXED_OBJECT` i `sectionDetector.js`. `classifyValue` returnerer nå denne typen for blandet innhold istedenfor UNKNOWN.
+- `RootPrimitivesPanel` utvidet til å håndtere nested objects og array-of-objects: viser preview-chips + "🔧 Rediger JSON"-knapp som åpner ny `JsonValueModal` (textarea med JSON-validering ved lagring).
+- App.js: `loadSectionFromOriginal`, `persistCurrentSection` og `computeLiveJson` håndterer nå `MIXED_OBJECT` ved å speile hele subobjektet via `rootPrimitives`-state.
+- Treffer reelle bruksområder som `priser-student.json` (tannlege-per) hvor `landing` har `headline: array, tagline: string, venn_deal: object, slik_gjor_du: array-of-objects, klinikk: object` på ett nivå.
+- Filer: `src/utils/sectionDetector.js`, `src/components/RootPrimitivesPanel.js`, `src/components/JsonValueModal.js` (ny), `src/App.js`.
+
 **Vercel deploy-fikser (underveis):**
 - Konvertert `/api/`-mappa fra `.js` (CJS) til `.mjs` (ESM) for å fungere med `jose v6` som er ESM-only.
 - Fjernet `api/package.json` etter konflikt mellom `{"type":"module"}` og Vercel build-pipeline.

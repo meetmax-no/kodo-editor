@@ -7,6 +7,7 @@ export const SECTION_TYPE = {
   ARRAY_OF_OBJECTS: 'array-of-objects',
   DICT_OF_OBJECTS: 'dict-of-objects',
   DICT_OF_PRIMITIVES: 'dict-of-primitives',
+  MIXED_OBJECT: 'mixed-object',     // objekt med blandet innhold (primitives + arrays + nested objects)
   PRIMITIVE: 'primitive',           // root-level scalars
   NESTED_CATEGORIES: 'nested-categories',
   UNKNOWN: 'unknown',
@@ -48,7 +49,9 @@ function classifyValue(value) {
     if (values.length === 0) return SECTION_TYPE.DICT_OF_PRIMITIVES;
     if (values.every(isPlainObject)) return SECTION_TYPE.DICT_OF_OBJECTS;
     if (values.every(isPrimitive)) return SECTION_TYPE.DICT_OF_PRIMITIVES;
-    return SECTION_TYPE.UNKNOWN;
+    // Blandet innhold (strings + arrays + nested objects) — håndteres som
+    // mixed-object, vises i RootPrimitivesPanel med JSON-modal for komplekse felter.
+    return SECTION_TYPE.MIXED_OBJECT;
   }
   return SECTION_TYPE.UNKNOWN;
 }

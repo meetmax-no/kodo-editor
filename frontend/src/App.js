@@ -12,6 +12,7 @@ import JsonPreviewPanel from './components/JsonPreviewPanel';
 import SectionPicker from './components/SectionPicker';
 import Sidebar from './components/Sidebar';
 import RootPrimitivesPanel from './components/RootPrimitivesPanel';
+import JsonValueModal from './components/JsonValueModal';
 import AddFieldModal from './components/AddFieldModal';
 import SettingsModal from './components/SettingsModal';
 import CommandPalette from './components/CommandPalette';
@@ -124,9 +125,12 @@ function App({ auth }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   // V5.1: custom URL modal
   const [customUrlOpen, setCustomUrlOpen] = useState(false);
-  // V5.2: GitHub push modal + tracking av lastet kilde-URL
+  // V6.1: GitHub push modal + tracking av lastet kilde-URL
   const [githubModalOpen, setGithubModalOpen] = useState(false);
   const [loadedUrl, setLoadedUrl] = useState(null);
+  // V6.1: JSON-value modal for nested objects / array-of-objects i MIXED_OBJECT-seksjoner
+  const [jsonValueModalOpen, setJsonValueModalOpen] = useState(false);
+  const [jsonValueField, setJsonValueField] = useState({ name: null, value: null });
   // V5.0: sidebar collapsed state for ≥7 seksjoner
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try { return localStorage.getItem('kodo-editor-sidebar-collapsed-v1') === '1'; } catch { return false; }
@@ -210,6 +214,11 @@ function App({ auth }) {
       if (rootPrimitives) {
         updatedOriginal = { ...updatedOriginal, ...rootPrimitives };
       }
+    } else if (activeSectionType === SECTION_TYPE.MIXED_OBJECT) {
+      // V6.1: rootPrimitives inneholder hele subobjektet for denne seksjonen
+      if (rootPrimitives) {
+        updatedOriginal[activeSectionKey] = { ...rootPrimitives };
+      }
     } else {
       const cleanedPackages = packages.map((pkg) => {
         const { _internalId, ...rest } = pkg;
@@ -259,6 +268,15 @@ function App({ auth }) {
       return;
     }
 
+    // V6.1: MIXED_OBJECT — vises i RootPrimitivesPanel som key→value på subobjektet
+    if (section.type === SECTION_TYPE.MIXED_OBJECT) {
+      setRootPrimitives({ ...(original[sectionKey] || {}) });
+      setPackages([]);
+      setCategories([sectionKey]);
+      setSelectedCategoryIndex(0);
+      return;
+    }
+
     setRootPrimitives(null);
     const raw = original[sectionKey];
     let rows = [];
@@ -296,6 +314,11 @@ function App({ auth }) {
 
       if (activeSectionType === SECTION_TYPE.PRIMITIVE) {
         if (rootPrimitives) Object.assign(merged, rootPrimitives);
+        return merged;
+      }
+
+      if (activeSectionType === SECTION_TYPE.MIXED_OBJECT) {
+        if (rootPrimitives) merged[activeSectionKey] = { ...rootPrimitives };
         return merged;
       }
 
@@ -1099,6 +1122,19 @@ function App({ auth }) {
     setListModalOpen(true);
   };
 
+  // V6.1: Åpne JsonValueModal for nested object / array-of-objects i MIXED_OBJECT-seksjon
+  const handleEditRootJson = (fieldName, value) => {
+    setJsonValueField({ name: fieldName, value });
+    setJsonValueModalOpen(true);
+  };
+  const handleSaveJsonValue = (newValue) => {
+    if (jsonValueField.name) {
+      handleRootPrimitiveChange(jsonValueField.name, newValue);
+    }
+    setJsonValueModalOpen(false);
+    setJsonValueField({ name: null, value: null });
+  };
+
   const resetEditingField = () =>
     setEditingField({ source: 'package', packageId: null, fieldName: null, value: null, wrapperKey: null });
 
@@ -1711,18 +1747,24 @@ function App({ auth }) {
           );
         })()}
 
-        {/* V3.0: RootPrimitivesPanel når aktiv seksjon er primitive */}
-        {sections && activeSectionType === SECTION_TYPE.PRIMITIVE && rootPrimitives && (
+        {/* V3.0: RootPrimitivesPanel når aktiv seksjon er primitive eller mixed-object */}
+        {sections &&
+          (activeSectionType === SECTION_TYPE.PRIMITIVE ||
+            activeSectionType === SECTION_TYPE.MIXED_OBJECT) &&
+          rootPrimitives && (
           <RootPrimitivesPanel
             data={rootPrimitives}
             dirtyFields={dirtyFields}
             onChange={handleRootPrimitiveChange}
             onEditArray={handleEditRootArray}
+            onEditJson={handleEditRootJson}
           />
         )}
 
-        {/* Pakker-tabell — skjules når aktiv seksjon er primitive */}
-        {!(sections && activeSectionType === SECTION_TYPE.PRIMITIVE) && (
+        {/* Pakker-tabell — skjules når aktiv seksjon er primitive eller mixed-object */}
+        {!(sections &&
+          (activeSectionType === SECTION_TYPE.PRIMITIVE ||
+            activeSectionType === SECTION_TYPE.MIXED_OBJECT)) && (
         <div className="table-section">
           <div className="table-header-bar">
             <h2 className="section-title-inline">
@@ -1989,6 +2031,14 @@ function App({ auth }) {
         title={`Rediger liste: ${editingField.fieldName}`}
         items={editingField.value}
         onSave={handleSaveList}
+      />
+
+      <JsonValueModal
+        isOpen={jsonValueModalOpen}
+        onClose={() => setJsonValueModalOpen(false)}
+        fieldName={jsonValueField.name}
+        initialValue={jsonValueField.value}
+        onSave={handleSaveJsonValue}
       />
 
       <IconPickerModal
