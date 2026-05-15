@@ -1,0 +1,103 @@
+{
+  "_meta": {
+    "client": "Per Måreid",
+    "createdAt": "2026-05-15",
+    "createdBy": "Ko | Do · Consult",
+    "notes": "KoDo · Editor — universal JSON-editor. Bakgrunner og branding kan endres her uten kode-deploy."
+  },
+  "brand": {
+    "name": "Ko | Do · Editor",
+    "tagline": "Universal JSON Editor"
+  },
+  "defaults": {
+    "backgroundId": "slate-night",
+    "rotate": "static",
+    "overlayOpacity": 0.35
+  },
+  "backgrounds": [
+    {
+      "id": "slate-night",
+      "name": "Slate Night",
+      "category": "gradient",
+      "tone": "dark",
+      "css": "radial-gradient(1200px 800px at 10% -10%, rgba(52, 211, 153, 0.10), transparent 50%), radial-gradient(1000px 700px at 110% 0%, rgba(99, 102, 241, 0.08), transparent 55%), radial-gradient(800px 600px at 50% 110%, rgba(244, 114, 182, 0.06), transparent 55%), #050816"
+    },
+    {
+      "id": "paper-light",
+      "name": "Paper Light",
+      "category": "gradient",
+      "tone": "light",
+      "css": "radial-gradient(1200px 600px at 10% -10%, rgba(79, 70, 229, 0.08), transparent 60%), radial-gradient(1000px 500px at 110% 10%, rgba(16, 185, 129, 0.05), transparent 60%), #FAF7F0"
+    },
+    {
+      "id": "aurora",
+      "name": "Aurora",
+      "category": "gradient",
+      "tone": "dark",
+      "css": "radial-gradient(1400px 900px at 0% 0%, rgba(16, 185, 129, 0.20), transparent 50%), radial-gradient(1200px 800px at 100% 100%, rgba(99, 102, 241, 0.18), transparent 55%), radial-gradient(800px 600px at 50% 50%, rgba(168, 85, 247, 0.12), transparent 60%), #0A0E1A"
+    },
+    {
+      "id": "sunset",
+      "name": "Sunset",
+      "category": "gradient",
+      "tone": "dark",
+      "css": "radial-gradient(1400px 900px at 0% 100%, rgba(249, 115, 22, 0.22), transparent 50%), radial-gradient(1200px 800px at 100% 0%, rgba(236, 72, 153, 0.18), transparent 55%), radial-gradient(800px 600px at 50% 50%, rgba(251, 191, 36, 0.10), transparent 60%), #1A0B14"
+    },
+    {
+      "id": "forest-mist",
+      "name": "Forest Mist",
+      "category": "gradient",
+      "tone": "dark",
+      "css": "radial-gradient(1400px 900px at 50% 0%, rgba(34, 197, 94, 0.18), transparent 55%), radial-gradient(1000px 700px at 0% 100%, rgba(20, 184, 166, 0.15), transparent 60%), #061410"
+    },
+    {
+      "id": "mono",
+      "name": "Mono",
+      "category": "gradient",
+      "tone": "dark",
+      "css": "radial-gradient(1200px 800px at 50% 0%, rgba(255, 255, 255, 0.04), transparent 60%), #0A0A0A"
+    },
+    {
+      "id": "tokyo-night",
+      "name": "Tokyo by Night",
+      "category": "photo",
+      "tone": "dark",
+      "url": "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=2070&auto=format&fit=crop"
+    },
+    {
+      "id": "aurora-borealis",
+      "name": "Nordlys — Norge",
+      "category": "photo",
+      "tone": "dark",
+      "url": "https://images.unsplash.com/photo-1509529711801-deac231925ac?q=80&w=2070&auto=format&fit=crop"
+    },
+    {
+      "id": "fjord",
+      "name": "Norsk fjord",
+      "category": "photo",
+      "tone": "dark",
+      "url": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format&fit=crop"
+    },
+    {
+      "id": "starfield",
+      "name": "Stjernehimmel",
+      "category": "photo",
+      "tone": "dark",
+      "url": "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=2070&auto=format&fit=crop"
+    },
+    {
+      "id": "concrete",
+      "name": "Brutalist Concrete",
+      "category": "photo",
+      "tone": "dark",
+      "url": "https://images.unsplash.com/photo-1517089152318-42ec560349c0?q=80&w=2070&auto=format&fit=crop"
+    },
+    {
+      "id": "studio-black",
+      "name": "Studio Black",
+      "category": "photo",
+      "tone": "dark",
+      "url": "https://images.unsplash.com/photo-1517760444937-f6397edcbbcd?q=80&w=2070&auto=format&fit=crop"
+    }
+  ]
+}

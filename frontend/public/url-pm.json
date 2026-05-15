@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Priser",
+    "url": "https://raw.githubusercontent.com/meetmax-no/tannlege-per/refs/heads/main/frontend/public/data/priser.json"
+  },
+  {
+    "name": "Studenttilbud",
+    "url": "https://raw.githubusercontent.com/meetmax-no/tannlege-per/refs/heads/main/frontend/public/data/priser-student.json"
+  },
+  {
+    "name": "Tjenester",
+    "url": "https://raw.githubusercontent.com/meetmax-no/tannlege-per/refs/heads/main/frontend/public/data/tjenester.json"
+  },
+  {
+    "name": "Åpningstider",
+    "url": "https://raw.githubusercontent.com/meetmax-no/tannlege-per/refs/heads/main/frontend/public/data/apningstider.json"
+  },
+  {
+    "name": "JSON Editor - Default list",
+    "url": "https://raw.githubusercontent.com/meetmax-no/kodo-editor/refs/heads/main/frontend/public/url-pm.json"
+  },
+  {
+    "name": "Custom URL...",
+    "url": ""
+  }
+]
