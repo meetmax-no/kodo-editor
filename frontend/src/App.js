@@ -1483,6 +1483,15 @@ function App({ auth }) {
           </button>
           <button
             className="btn icon-btn"
+            onClick={() => window.open('/hjelp.html', '_blank', 'noopener,noreferrer')}
+            data-testid="open-help-btn"
+            title="Hjelp · Kom i gang"
+            aria-label="Hjelp"
+          >
+            ?
+          </button>
+          <button
+            className="btn icon-btn"
             onClick={() => setSettingsOpen(true)}
             data-testid="open-settings-btn"
             title="Innstillinger"

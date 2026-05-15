@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hjelp · KoDo Editor</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <style>
+    :root {
+      --bg: #050816;
+      --glass: rgba(255, 255, 255, 0.04);
+      --glass-strong: rgba(255, 255, 255, 0.07);
+      --border: rgba(255, 255, 255, 0.10);
+      --border-strong: rgba(255, 255, 255, 0.18);
+      --text: rgba(255, 255, 255, 0.96);
+      --text-soft: rgba(255, 255, 255, 0.72);
+      --text-faint: rgba(255, 255, 255, 0.45);
+      --accent: #FBBF24;
+      --accent-soft: rgba(251, 191, 36, 0.14);
+      --accent-glow: rgba(251, 191, 36, 0.40);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      background:
+        radial-gradient(1200px 800px at 10% -10%, rgba(52, 211, 153, 0.10), transparent 50%),
+        radial-gradient(1000px 700px at 110% 0%, rgba(99, 102, 241, 0.08), transparent 55%),
+        radial-gradient(800px 600px at 50% 110%, rgba(244, 114, 182, 0.06), transparent 55%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 64px 32px 96px;
+    }
+    .topnav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 48px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 40px; height: 40px;
+      background: linear-gradient(180deg, var(--accent), #F59E0B);
+      color: #1f1f1f;
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: 0.04em;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 6px 24px -8px var(--accent-glow);
+    }
+    .brand-name {
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: 0.01em;
+    }
+    .brand-sub {
+      font-size: 11px;
+      color: var(--text-faint);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-family: 'SF Mono', Menlo, monospace;
+    }
+    .back-link {
+      color: var(--text-soft);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--glass);
+      transition: all 140ms ease;
+    }
+    .back-link:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    h1 {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+    .lead {
+      color: var(--text-soft);
+      font-size: 16px;
+      margin-bottom: 48px;
+      max-width: 620px;
+    }
+    section {
+      margin-bottom: 40px;
+      padding: 28px 32px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      backdrop-filter: blur(20px) saturate(140%);
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
+    }
+    section:hover {
+      border-color: var(--border-strong);
+    }
+    h2 {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    h3 {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 18px;
+    }
+    p { color: var(--text-soft); margin-bottom: 12px; }
+    p:last-child { margin-bottom: 0; }
+    ol, ul {
+      color: var(--text-soft);
+      margin: 12px 0 16px 22px;
+    }
+    ol li, ul li {
+      margin-bottom: 10px;
+      padding-left: 4px;
+    }
+    ol li::marker {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    code, kbd {
+      font-family: 'SF Mono', Menlo, monospace;
+      background: rgba(0, 0, 0, 0.32);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 0.88em;
+      color: var(--text);
+    }
+    kbd {
+      background: var(--glass-strong);
+    }
+    strong { color: var(--text); }
+    .tip {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(251, 191, 36, 0.30);
+      border-radius: 9px;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .tip::before {
+      content: "💡  ";
+      margin-right: 4px;
+    }
+    .warning {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: rgba(248, 113, 113, 0.10);
+      border: 1px solid rgba(248, 113, 113, 0.30);
+      border-radius: 9px;
+      font-size: 14px;
+    }
+    .warning::before {
+      content: "⚠️  ";
+      margin-right: 4px;
+    }
+    footer {
+      margin-top: 48px;
+      text-align: center;
+      color: var(--text-faint);
+      font-size: 12px;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="topnav">
+      <div class="brand">
+        <div class="brand-logo">Ko</div>
+        <div>
+          <div class="brand-name">Ko | Do · Editor</div>
+          <div class="brand-sub">HJELP &amp; KOM-I-GANG</div>
+        </div>
+      </div>
+      <a class="back-link" href="/" data-testid="back-to-app-link">← Tilbake til editor</a>
+    </nav>
+
+    <h1>Kom i gang på 3 steg</h1>
+    <p class="lead">
+      KoDo Editor lar deg redigere innholdet på nettsiden din uten å åpne kode. 
+      Du logger inn, redigerer, og sender den oppdaterte filen tilbake. 
+      Vi tar oss av resten.
+    </p>
+
+    <section>
+      <h2>Steg 1</h2>
+      <h3>Logg inn</h3>
+      <p>
+        Du fikk et passord tilsendt på sikker kanal. Skriv det inn på innloggings­skjermen 
+        og trykk <strong>Logg inn</strong>.
+      </p>
+      <ul>
+        <li>
+          Bruk <strong>👁 Vis</strong>-ikonet til høyre i passord­feltet hvis du vil dobbelt­sjekke 
+          at du skrev riktig.
+        </li>
+        <li>
+          Kryss av for <strong>«Husk meg i 30 dager»</strong> hvis du jobber fra din egen, sikre maskin. 
+          Da slipper du å logge inn på nytt hver dag.
+        </li>
+        <li>
+          Du logger ut når som helst via <strong>«Logg ut»</strong> nederst i app-vinduet.
+        </li>
+      </ul>
+      <div class="warning">
+        Glemt passordet? Ta kontakt med Ko | Do Consult — passord settes manuelt og kan ikke 
+        gjenopprettes via e-post.
+      </div>
+    </section>
+
+    <section>
+      <h2>Steg 2</h2>
+      <h3>Last inn fil og rediger</h3>
+      <p>
+        Når du er inne, må du laste inn data­filen du vil redigere. Du har tre alternativer:
+      </p>
+      <ol>
+        <li>
+          <strong>Velg fra forhåndsdefinerte filer</strong> — bruk neds­trekks­menyen til høyre 
+          (f.eks. «Priser», «Studenttilbud») og klikk <strong>Last inn</strong>. Dette er 
+          den enkleste måten og vil dekke de fleste behov.
+        </li>
+        <li>
+          <strong>Fra URL</strong> — hvis du har en direkte­lenke til en JSON-fil (typisk fra GitHub), 
+          velg fanen <strong>«🔗 Fra URL»</strong>, lim inn lenken og klikk <strong>Last inn</strong>.
+        </li>
+        <li>
+          <strong>Fra lokal fil</strong> — har du en kopi på maskinen, velg fanen 
+          <strong>«📄 Lokal fil»</strong> og dra inn fila eller bla deg fram.
+        </li>
+      </ol>
+      <p>
+        Når fila er lastet inn ser du innholdet i seksjoner. Klikk deg gjennom seksjonene 
+        eller kategoriene, og rediger feltene direkte ved å klikke i tekstboksene.
+      </p>
+      <ul>
+        <li>Endringer markeres med en <strong>gul ramme</strong> så du ser hva du har endret.</li>
+        <li>Bruk <kbd>⌘</kbd>+<kbd>Z</kbd> for å <strong>angre</strong>, eller knappene øverst.</li>
+        <li>
+          Bruk <kbd>⌘</kbd>+<kbd>K</kbd> for å åpne <strong>søk</strong> — finn raskt et felt 
+          eller bytt seksjon.
+        </li>
+      </ul>
+      <div class="tip">
+        Innstillinger (⚙-ikonet øverst til høyre) lar deg bytte tema og bakgrunn — 
+        velg det som passer øynene dine best. Innstillingene huskes lokalt på maskinen.
+      </div>
+    </section>
+
+    <section>
+      <h2>Steg 3</h2>
+      <h3>Lagre og send til oss</h3>
+      <p>
+        Når du er ferdig med å redigere har du to måter å sende filen tilbake til 
+        Ko | Do Consult:
+      </p>
+      <ol>
+        <li>
+          <strong>💾 Last ned JSON</strong> — klikk knappen nederst i editoren. 
+          Fila lastes ned til <code>Downloads</code>-mappa di. Send den som vedlegg på e-post 
+          eller via avtalt kanal.
+        </li>
+        <li>
+          <strong>📋 Kopier til clipboard</strong> — kopierer hele innholdet til 
+          utklipps­tavla. Lim det inn i en e-post eller meldings­tråd. Praktisk hvis du 
+          jobber raskt og ikke vil ha filer liggende på maskinen.
+        </li>
+      </ol>
+      <div class="tip">
+        Vi anbefaler at du sender filen med en kort beskrivelse av hva du har endret 
+        (f.eks. «oppdatert priser for studenttilbud» eller «lagt til ny åpningstid 
+        for fredag»). Det gjør oppfølgingen raskere.
+      </div>
+      <div class="warning">
+        Lukker du nettleseren før du har lastet ned eller kopiert, går endringene tapt. 
+        Editoren lagrer <strong>ikke</strong> automatisk.
+      </div>
+    </section>
+
+    <section>
+      <h2>Spørsmål?</h2>
+      <h3>Ta kontakt</h3>
+      <p>
+        Trenger du hjelp eller finner du noe som ikke fungerer som du forventer — 
+        ta kontakt med Ko | Do Consult, så hjelper vi deg.
+      </p>
+    </section>
+
+    <footer>
+      Ko | Do · Editor — for deg som heller vil redigere innhold enn kode.
+    </footer>
+  </div>
+</body>
+</html>
