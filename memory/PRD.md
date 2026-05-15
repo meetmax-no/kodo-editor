@@ -203,7 +203,9 @@ Erstatter JSON-textarea-modalen fra v6.1 med en **rekursiv inline editor** som r
 - Ny `public/hjelp.html` — statisk side med Soft Glass-styling som matcher appen.
 - Dekker 3 steg: Logg inn → Last inn fil og rediger → Lagre og send til Ko | Do Consult.
 - Eksplisitt klart at sluttkunden IKKE pusher til GitHub — bruker «Last ned JSON» eller «Kopier til clipboard» og sender filen via avtalt kanal.
-- "?"-knapp i topbar (mellom «Ny JSON» og ⚙) åpner siden i ny tab via `window.open('/hjelp.html', '_blank')`.
+- Dedikert info-blokk forklarer hva en **seksjon** er (top-level grupper i fila) og hva **kategorier** er (underinndelinger).
+- "?"-knapp i app-topbar (mellom «Ny JSON» og ⚙) åpner siden i ny tab.
+- "? Hjelp · Kom i gang"-lenke i Login-footer åpner samme side — slik at brukere som ikke har kommet inn ennå også får hjelp.
 - Ingen avhengigheter, ingen build-prosess — bare HTML + inline CSS. Lett å oppdatere uten kode-deploy ved å redigere fila.
 
 **Vercel deploy-fikser (underveis):**

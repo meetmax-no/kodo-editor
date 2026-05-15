@@ -179,6 +179,15 @@ export default function Login({ onLogin, error, brand: brandProp, meta: metaProp
               <span className="login-footer-sep"> · </span>
               <span className="login-footer-version">{APP_VERSION}</span>
             </span>
+            <a
+              href="/hjelp.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="login-footer-help"
+              data-testid="login-help-link"
+            >
+              ? Hjelp · Kom i gang
+            </a>
           </footer>
         </form>
       </div>
